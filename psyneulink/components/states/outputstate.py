@@ -41,7 +41,7 @@ a Mechanism's **output_states** argument (see `OutputState_Specification` below)
 constructor, and a Mechanism is specified in the **owner** argument, it is automatically assigned to that Mechanism.
 Note that its `variable <OutputState.variable>` must be compatible (in number and type of elements) with the item of
 its owner's `value <Mechanism_Base.value>` specified by the OutputState's `index <OutputState.index>` attribute. If
-its **owner* is not specified, `initialization is deferred.
+its **owner** is not specified, `initialization is deferred.
 
 .. _OutputState_Deferred_Initialization:
 
@@ -99,7 +99,7 @@ former (that is, if an *OUTPUT_STATES* entry is included in the parameter dictio
 Adding OutputStates to a Mechanism after it is created
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-OutputStates can also be added* to a Mechanism, using the Mechanism's `add_states <Mechanism_Base.add_methods>` method.
+OutputStates can also be added to a Mechanism, using the Mechanism's `add_states <Mechanism_Base.add_methods>` method.
 Unlike specification in the constructor, this **does not** replace any OutputStates already assigned to the Mechanism.
 Doing so appends them to the list of OutputStates in the Mechanism's `output_states <Mechanism_Base.output_states>`
 attribute, and their values are appended to its `output_values <Mechanism_Base.output_values>` attribute.  If the name
