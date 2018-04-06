@@ -4,7 +4,7 @@ from psyneulink.library.subsystems.evc.adaptivepredictionevccontrolmechanism imp
 
 
 # Control Parameters
-signalSearchRange = np.arange(1.0,2.1,0.5) # why 0.8 to 2.0 in increments of 0.2
+signalSearchRange = np.arange(1.5,3.1,0.5) # why 0.8 to 2.0 in increments of 0.2
 
 
 test_mech = pnl.TransferMechanism(size=1)
@@ -23,6 +23,8 @@ Target_Rep = pnl.TransferMechanism(name='Target Representation',
                                                pnl.ALLOCATION_SAMPLES: signalSearchRange}))),
                                    prefs = {pnl.LOG_PREF: pnl.PreferenceEntry(pnl.LogCondition.INITIALIZATION, pnl.PreferenceLevel.INSTANCE)})
 Target_Rep.set_log_conditions('value') # Log Target_Rep
+Target_Rep.set_log_conditions('slope') # Log Target_Rep
+
 Target_Rep.loggable_items
 
 #log initialization
@@ -35,6 +37,8 @@ Flanker_Rep = pnl.TransferMechanism(name='Flanker Representation',
                                             control_signal_params={
                                                 pnl.ALLOCATION_SAMPLES: signalSearchRange}))))
 Flanker_Rep.set_log_conditions('value') # Log Flanker_Rep
+Flanker_Rep.set_log_conditions('slope') # Log Flanker_Rep
+
 Flanker_Rep.loggable_items
 
 Target_Rep.log.LogCondition =2
@@ -199,26 +203,13 @@ mySystem.controller.prediction_mechanisms.mechanisms[2].function_object.rate = 1
 # compatible with MATLAB stimulus list for initialization
 nTrials = 4
 targetFeatures = [1.0, 1.0, 1.0, 1.0, 1.0,1.0, 1.0, 1.0, 1.0]
-flankerFeatures = np.array([1.0, 1.0, 1.0, 1.0, 1.0,1.0, 1.0, 1.0, 1.0])
-weights = np.array([1.0, 1.0, -1.0, 1.0, 1.0,-1.0, -1.0, 1.0, -1.0])
-
-
-flankerFeatures_inc = flankerFeatures *weights
-flankerFeatures_inc = np.ndarray.tolist(flankerFeatures_inc)
-# flankerFeatures_con = [1.5, 0]
+flankerFeatures = [1.0, 1.0, -1.0, 1.0, 1.0,-1.0, -1.0, 1.0, -1.0]
 reward = [100, 100, 100, 100, 100, 100, 100, 100, 100]
 
-
-targetInputList = targetFeatures
-flankerInputList = flankerFeatures_inc
-rewardList = reward
-
-
-
 stim_list_dict = {
-    Target_Stim: targetInputList,
-    Flanker_Stim: flankerInputList,
-    Reward: rewardList
+    Target_Stim: targetFeatures,
+    Flanker_Stim: flankerFeatures,
+    Reward: reward
 
 }
 
