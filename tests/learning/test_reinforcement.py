@@ -180,14 +180,21 @@ def test_learn_over_prediction_process():
         ],
         name='EVC Test System',
     )
-    mySystem.show_graph(show_learning=True)
 
     # Stimuli
     stim_list_dict = {
         Input: [0.5, 0.123],
         Reward: [20, 20]
     }
-    mySystem.add_prediction_learning([Input, Reward])
+
+    mySystem.add_prediction_learning([Input, Reward], [0.3481, 0.3481])
+    # mySystem.show_graph(show_learning=True)
+    print("TARGETS = ", mySystem.targets)
+    print(mySystem.controller.prediction_mechanisms)
+    target_list_dict = {
+        mySystem.controller.prediction_mechanisms[1]: [0.5, 0.123],
+        mySystem.controller.prediction_mechanisms[0]: [20, 20]
+    }
     input_mechanism_values = []
     # reward_mechanism_values = []
     def check_intermediate_values():
@@ -195,10 +202,10 @@ def test_learn_over_prediction_process():
         # reward_mechanism_values.append(Reward.value)
     mySystem.learning = True
     mySystem.run(inputs=stim_list_dict,
+                 # targets=target_list_dict,
                  learning=True,
                  call_after_trial=check_intermediate_values)
 
-    # print(input_mechanism_values)
     RewardPrediction = mySystem.execution_list[3]
     InputPrediction = mySystem.execution_list[4]
 

@@ -780,6 +780,8 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
                 state_names.append(state_name)
                 variable.append(origin_mech.input_states[state_name].instance_defaults.variable)
 
+            prediction_input_mechanism = TransferMechanism(name=origin_mech.name + " Prediction Input Mechanism")
+
             # Instantiate PredictionMechanism
             prediction_mechanism = self.paramsCurrent[PREDICTION_MECHANISM_TYPE](
                     name=origin_mech.name + " " + PREDICTION_MECHANISM,
@@ -801,16 +803,20 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
                 original_path_afferents = orig_input_state.path_afferents.copy()
 
                 for projection in original_path_afferents:
+                    # projections from system/process input states to prediction input mechanisms
                     MappingProjection(sender=projection.sender,
                                       receiver=prediction_mechanism,
+                                      # receiver=prediction_input_mechanism,
                                       matrix=projection.matrix)
 
 
-                # Assign projections FROM prediction_mechanism that duplicate those from SystemInputState to origin mech
+                # # projections from prediction input mechanisms to prediction mechanisms
+                # MappingProjection(sender=prediction_input_mechanism,
+                #                   receiver=prediction_mechanism)
 
+                # projections from prediction mechanisms to origin mechanisms
                 PredictionProjection(sender=prediction_mechanism,
-                                     receiver=orig_input_state,
-                                     matrix=projection.matrix)
+                                     receiver=orig_input_state)
 
                 # tuple specfication of learning: matrix=(projection.matrix, LEARNING)
 
