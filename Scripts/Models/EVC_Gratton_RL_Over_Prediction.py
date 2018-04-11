@@ -4,7 +4,7 @@ from psyneulink.library.subsystems.evc.adaptivepredictionevccontrolmechanism imp
 
 
 # Control Parameters
-signalSearchRange = np.arange(1.5,3.1,0.5) # why 0.8 to 2.0 in increments of 0.2
+signalSearchRange = np.arange(1.0,2.1,0.5) # why 0.8 to 2.0 in increments of 0.2np.array([1.0])
 
 
 test_mech = pnl.TransferMechanism(size=1)
@@ -66,6 +66,8 @@ Decision = pnl.DDM(function=pnl.BogaczEtAl(
                            pnl.FUNCTION: pnl.Linear(0, slope=0.0, intercept=1).function
         }
     ],) #drift_rate=(1.0),threshold=(0.2645),noise=(0.5),starting_point=(0), t0=0.15
+Decision.set_log_conditions('drift_rate')
+
 Decision.set_log_conditions('DECISION_VARIABLE')
 Decision.set_log_conditions('value')
 Decision.set_log_conditions('PROBABILITY_UPPER_THRESHOLD')
@@ -129,13 +131,12 @@ mySystem = pnl.System(processes=[TargetControlProcess,
     name='EVC Markus System')
 
 mySystem.add_prediction_learning([Target_Stim, Flanker_Stim])
-
 # Show characteristics of system:
 mySystem.show()
 # mySystem.controller.show()
 
 # Show graph of system
-mySystem.show_graph(show_control=pnl.ALL, show_dimensions=pnl.ALL)# show_control=True,show_dimensions=True)
+# mySystem.show_graph(show_control=pnl.ALL, show_dimensions=pnl.ALL)# show_control=True,show_dimensions=True)
 
 
 #log input state of mySystem
@@ -147,9 +148,9 @@ mySystem.controller.set_log_conditions('Flanker Representation[slope] ControlSig
 mySystem.controller.set_log_conditions('Target Representation[slope] ControlSignal')
 
 mySystem.controller.objective_mechanism.set_log_conditions('value')
-# print('current input value',mySystem.controller.input_states.values)
-# print('current objective mech output value',mySystem.controller.objective_mechanism.output_states.values)
-#
+mySystem.controller.objective_mechanism.set_log_conditions('PROBABILITY_UPPER_THRESHOLD')
+mySystem.controller.objective_mechanism.set_log_conditions('OFFSET_RT')
+
 
 
 # configure EVC components
@@ -158,9 +159,9 @@ mySystem.controller.control_signals[1].intensity_cost_function = pnl.Exponential
 #
 # #change prediction mechanism function_object.rate for all 3 prediction mechanisms
 #
-mySystem.controller.prediction_mechanisms.mechanisms[0].function_object.rate = 1.0
-mySystem.controller.prediction_mechanisms.mechanisms[1].function_object.rate = 0.3481  # reward rate
-mySystem.controller.prediction_mechanisms.mechanisms[2].function_object.rate = 1.0
+# mySystem.controller.prediction_mechanisms.mechanisms[0].function_object.rate = 1.0
+# mySystem.controller.prediction_mechanisms.mechanisms[1].function_object.rate = 0.3481  # reward rate
+# mySystem.controller.prediction_mechanisms.mechanisms[2].function_object.rate = 1.0
 
 
 
@@ -201,10 +202,10 @@ mySystem.controller.prediction_mechanisms.mechanisms[2].function_object.rate = 1
 
 # generate stimulus environment: remember that we add one congruent stimulus infront of actuall stimulus list
 # compatible with MATLAB stimulus list for initialization
-nTrials = 4
-targetFeatures = [1.0, 1.0, 1.0, 1.0, 1.0,1.0, 1.0, 1.0, 1.0]
-flankerFeatures = [1.0, 1.0, -1.0, 1.0, 1.0,-1.0, -1.0, 1.0, -1.0]
-reward = [100, 100, 100, 100, 100, 100, 100, 100, 100]
+nTrials = 8
+targetFeatures = [1.0, 1.0, 1.0, 1.0,1.0, 1.0, 1.0, 1.0]
+flankerFeatures = [1.0, -1.0, 1.0, 1.0,-1.0, -1.0, 1.0, -1.0]
+reward = [100, 100, 100, 100, 100, 100, 100, 100]
 
 stim_list_dict = {
     Target_Stim: targetFeatures,
@@ -214,11 +215,28 @@ stim_list_dict = {
 }
 
 # mySystem.controller.objective_mechanism.loggable_items
-mySystem.run(num_trials=nTrials,inputs=stim_list_dict)
+# mySystem.run(num_trials=nTrials,inputs=stim_list_dict)
+def inspect_matrix():
+    for prediction_mech in mySystem.controller.prediction_mechanisms:
+        print("matrix of ", prediction_mech.name, ": ", prediction_mech.efferents[0].matrix)
+
+mySystem.run(num_trials=nTrials,
+             inputs=stim_list_dict,
+             call_after_trial=inspect_matrix)
+
 
 # Flanker_Rep.log.print_entries()
-# Target_Rep.log.print_entries()
-Decision.log.print_entries()
+# # Target_Rep.log.print_entries()
+# D = Decision.log.nparray_dictionary()
+# D['drift_rate']
+
+# assert =  [[1.5511], [-0.2215
+#     1.5511
+#     1.5511
+#    -0.2215
+#    -0.2215
+#     1.5511
+#    -0.2215
 
 # print('output state of objective mechanism', mySystem.controller.objective_mechanism.output_states.values)
 #
@@ -226,7 +244,20 @@ Decision.log.print_entries()
 #
 # print('mapping projection from objective mechanism to EVC Control mechanism',mySystem.controller.projections[0].matrix)
 
-mySystem.controller.log.print_entries()
+#mySystem.controller.log.print_entries()
 
-Reward.log.print_entries()
-
+#Reward.log.print_entries()
+# # Reward.log.print_entries()
+# D = Decision.log.nparray_dictionary()
+# D['drift_rate']
+#
+# Flanker_Rep.log.print_entries()
+#
+# mySystem.controller.log.print_entries()
+#
+#
+# d = mySystem.controller.objective_mechanism.log.nparray_dictionary()
+# print(d['PROBABILITY_UPPER_THRESHOLD'])
+# Decision.log.print_entries()
+#
+# print('matrix: ',mySystem.controller.prediction_mechanisms[0].efferents[0].mod_matrix)
