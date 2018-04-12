@@ -691,7 +691,8 @@ class EVCControlMechanism(ControlMechanism):
     def __init__(self,
                  system:tc.optional(System_Base)=None,
                  objective_mechanism:tc.optional(tc.any(ObjectiveMechanism, list))=None,
-                 prediction_mechanism_type=integratormechanism.IntegratorMechanism,
+                 prediction_mechanism_type=TransferMechanism,
+                 # prediction_mechanism_type=integratormechanism.IntegratorMechanism,
                  prediction_mechanism_params:tc.optional(dict)=None,
                  control_signals:tc.optional(list) = None,
                  modulation:tc.optional(_is_modulation_param)=ModulationParam.MULTIPLICATIVE,
@@ -793,17 +794,21 @@ class EVCControlMechanism(ControlMechanism):
             prediction_input_mechanism = TransferMechanism(name=origin_mech.name + " INPUT " + PREDICTION_MECHANISM,
                                                            default_variable=variable,
                                                            input_states=state_names,
-                                                           params = prediction_mechanism_params,
+                                                           params=prediction_mechanism_params,
                                                            context=context)
+
 
             # Instantiate PredictionMechanism
             prediction_mechanism = self.paramsCurrent[PREDICTION_MECHANISM_TYPE](
                     name=origin_mech.name + " " + PREDICTION_MECHANISM,
                     default_variable=variable,
                     input_states=state_names,
-                    params = prediction_mechanism_params,
+                    integrator_mode=True,
+                    smoothing_factor=0.5,
+                    params=prediction_mechanism_params,
                     context=context,
             )
+
             prediction_mechanism._role = CONTROL
             prediction_mechanism.origin_mech = origin_mech
 

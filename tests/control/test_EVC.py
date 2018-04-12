@@ -105,6 +105,7 @@ def test_EVC():
         Reward: [20, 20]
     }
 
+    # mySystem.add_prediction_learning([Input], [0.00])
     mySystem.run(
         inputs=stim_list_dict,
     )
@@ -352,20 +353,22 @@ def test_EVC_gratton():
     for mech in mySystem.controller.prediction_mechanisms.mechanisms:
         if mech.name == 'Flanker Stimulus Prediction Mechanism' or mech.name == 'Target Stimulus Prediction Mechanism':
             # when you find a key mechanism (transfer mechanism) with the correct name, print its name
-            print(mech.name)
-            mech.function_object.rate = 1.0
+            # print(mech.name)
+            # mech.function_object.rate = 1.0
+            mech.smoothing_factor = 1.0
 
         if 'Reward' in mech.name:
-            print(mech.name)
-            mech.function_object.rate = 1.0
+            # print(mech.name)
+            # mech.function_object.rate = 1.0
+            mech.smoothing_factor = 1.0
             # mySystem.controller.prediction_mechanisms[mech].parameterStates['rate'].base_value = 1.0
 
-    print('new rate of integration mechanisms before System execution:')
-    # for mech in mySystem.controller.prediction_mechanisms.keys():
-    for mech in mySystem.controller.prediction_mechanisms.mechanisms:
-        print(mech.name)
-        print(mech.function_object.rate)
-        print('----')
+    # print('new rate of integration mechanisms before System execution:')
+    # # for mech in mySystem.controller.prediction_mechanisms.keys():
+    # for mech in mySystem.controller.prediction_mechanisms.mechanisms:
+    #     print(mech.name)
+    #     print(mech.function_object.rate)
+    #     print('----')
 
     # generate stimulus environment
 
@@ -475,7 +478,7 @@ def test_EVC_gratton():
         num_trials=nTrials,
         inputs=stim_list_dict,
     )
-
+    print(mySystem.results)
     np.testing.assert_allclose(
         pytest.helpers.expand_np_ndarray(mySystem.results),
         expected_results_array,
