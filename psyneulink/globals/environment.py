@@ -951,7 +951,10 @@ def _adjust_target_dict(component, target_dict):
     num_targets = -1
     for mech, target_list in target_dict.items():
         if isinstance(target_list, (float, list, np.ndarray)):
-            input_state_variable = mech.output_state.efferents[0].receiver.owner.input_states[TARGET].instance_defaults.variable
+            for proj in mech.output_state.efferents:
+                if proj.receiver.owner in component.target_mechanisms:
+                    input_state_variable = proj.receiver.owner.input_states[TARGET].instance_defaults.variable
+                    break
             num_targets = -1
 
             # first check if only one target was provided:
