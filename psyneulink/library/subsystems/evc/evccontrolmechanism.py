@@ -843,11 +843,6 @@ class EVCControlMechanism(ControlMechanism):
             system.execution_graph[prediction_mechanism] = set([prediction_input_mechanism])
             system.execution_list.append(prediction_mechanism)
 
-
-        from pprint import pprint
-        print("execution graph:")
-        pprint(system.execution_graph)
-        print(system.execution_list)
         self.prediction_mechanisms = MechanismList(self, self.prediction_mechs)
 
         # Assign list of destinations for predicted_inputs:
