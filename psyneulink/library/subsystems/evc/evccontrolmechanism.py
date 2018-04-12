@@ -790,7 +790,11 @@ class EVCControlMechanism(ControlMechanism):
                 state_names.append(state_name)
                 variable.append(origin_mech.input_states[state_name].instance_defaults.variable)
 
-            prediction_input_mechanism = TransferMechanism()
+            prediction_input_mechanism = TransferMechanism(name=origin_mech.name + " INPUT " + PREDICTION_MECHANISM,
+                                                           default_variable=variable,
+                                                           input_states=state_names,
+                                                           params = prediction_mechanism_params,
+                                                           context=context)
 
             # Instantiate PredictionMechanism
             prediction_mechanism = self.paramsCurrent[PREDICTION_MECHANISM_TYPE](
@@ -827,13 +831,18 @@ class EVCControlMechanism(ControlMechanism):
             # prediction_object_item = prediction_mechanism
             self.prediction_mechs.append(prediction_mechanism)
 
+            system.execution_graph[prediction_input_mechanism] = set()
+            system.execution_list = [prediction_input_mechanism] + system.execution_list
+
             # Add to system execution_graph and execution_list
-            system.execution_graph[prediction_mechanism] = set()
+            system.execution_graph[prediction_mechanism] = set([prediction_input_mechanism])
             system.execution_list.append(prediction_mechanism)
 
-            system.execution_graph[prediction_input_mechanism] = set()
-            system.execution_list.append(prediction_input_mechanism)
 
+        from pprint import pprint
+        print("execution graph:")
+        pprint(system.execution_graph)
+        print(system.execution_list)
         self.prediction_mechanisms = MechanismList(self, self.prediction_mechs)
 
         # Assign list of destinations for predicted_inputs:
