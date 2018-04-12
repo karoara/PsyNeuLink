@@ -334,6 +334,7 @@ from psyneulink.components.mechanisms.mechanism import MechanismList
 from psyneulink.components.mechanisms.processing import integratormechanism
 from psyneulink.components.mechanisms.processing.objectivemechanism import ObjectiveMechanism
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
+from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.components.shellclasses import Function, System_Base
 from psyneulink.globals.keywords import COMMAND_LINE, CONTROL, CONTROLLER, COST_FUNCTION, EVC_MECHANISM, FUNCTION, \
     INITIALIZING, INIT_FUNCTION_METHOD_ONLY, PARAMETER_STATES, PREDICTION_MECHANISM, PREDICTION_MECHANISMS, \
@@ -789,6 +790,8 @@ class EVCControlMechanism(ControlMechanism):
                 state_names.append(state_name)
                 variable.append(origin_mech.input_states[state_name].instance_defaults.variable)
 
+            prediction_input_mechanism = TransferMechanism()
+
             # Instantiate PredictionMechanism
             prediction_mechanism = self.paramsCurrent[PREDICTION_MECHANISM_TYPE](
                     name=origin_mech.name + " " + PREDICTION_MECHANISM,
@@ -802,13 +805,15 @@ class EVCControlMechanism(ControlMechanism):
 
             # Assign projections to prediction_mechanism that duplicate those received by origin_mech
             #    (this includes those from ProcessInputState, SystemInputState and/or recurrent ones
-            for orig_input_state, prediction_input_state in zip(origin_mech.input_states,
-                                                            prediction_mechanism.input_states):
+            for orig_input_state, prediction_input_input_state in zip(origin_mech.input_states,
+                                                            prediction_input_mechanism.input_states):
                 for projection in orig_input_state.path_afferents:
                     MappingProjection(sender=projection.sender,
-                                      receiver=prediction_input_state,
+                                      receiver=prediction_input_input_state,
                                       matrix=projection.matrix)
 
+            MappingProjection(sender=prediction_input_mechanism,
+                              receiver=prediction_mechanism)
             # Assign list of processes for which prediction_mechanism will provide input during the simulation
             # - used in _get_simulation_system_inputs()
             # - assign copy,
@@ -825,6 +830,9 @@ class EVCControlMechanism(ControlMechanism):
             # Add to system execution_graph and execution_list
             system.execution_graph[prediction_mechanism] = set()
             system.execution_list.append(prediction_mechanism)
+
+            system.execution_graph[prediction_input_mechanism] = set()
+            system.execution_list.append(prediction_input_mechanism)
 
         self.prediction_mechanisms = MechanismList(self, self.prediction_mechs)
 
