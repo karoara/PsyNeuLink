@@ -1732,7 +1732,11 @@ class System(System_Base):
                     # If it is an INTERNAL Mechanism for the System,
                     #    make sure that the LearningMechanisms for all of its afferent Projections being learned
                     #    receive error_signals from the LearningMechanisms of all it afferent Projections being learned.
-                    if processing_mech.systems[self] == INTERNAL:
+                    if self not in processing_mech.systems:
+                        # FIX - should _assign_error_signal_projections still be called? 
+                        print(self, " not in processing_mech.systems")
+                        _assign_error_signal_projections(processing_mech, self)
+                    elif processing_mech.systems[self] == INTERNAL:
                         _assign_error_signal_projections(processing_mech, self)
 
             # If sender_mech has no Projections left, raise exception
@@ -3942,6 +3946,23 @@ class System(System_Base):
             G.view(self.name.replace(" ", "-"), cleanup=True)
         elif output_fmt == 'jupyter':
             return G
+
+    def add_prediction_learning(self, origin_mechanisms, learning_rates):
+        from psyneulink.globals.keywords import ENABLED
+        for i in range(len(origin_mechanisms)):
+            mech = origin_mechanisms[i]
+            if mech in self.controller.origin_prediction_mechanisms:
+                prediction_mechanism = self.controller.origin_prediction_mechanisms[mech]
+                for proj in prediction_mechanism.path_afferents:
+                    prediction_process = Process(pathway=[proj.sender.owner,
+                                                          proj,
+                                                          prediction_mechanism],
+                                                 learning=ENABLED,
+                                                 learning_rate=learning_rates[i],
+                                                 name="Prediction")
+                    self.processes.append(prediction_process)
+        self._instantiate_processes(context="ADDING PREDICTION LEARNING")
+        self._instantiate_learning_graph(context="ADDING PREDICTION LEARNING")
 
 
 SYSTEM_TARGET_INPUT_STATE = 'SystemInputState'
