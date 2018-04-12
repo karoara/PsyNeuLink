@@ -1812,7 +1812,6 @@ class System(System_Base):
 
                     # Traverse list of mechanisms in process recursively
                     build_dependency_sets_by_traversing_projections(receiver, process)
-
         # Sort for consistency of output
         sorted_processes = sorted(self.processes, key=lambda process : process.name)
 
@@ -3190,67 +3189,68 @@ class System(System_Base):
 
     def add_prediction_learning(self, origin_mechanisms, learning_rates):
         from psyneulink.globals.keywords import ENABLED
-        # for i in range(len(origin_mechanisms)):
-        #     mech = origin_mechanisms[i]
-        #     if mech in self.controller.origin_prediction_mechanisms:
-        #         origin_mechanism = mech
-        #         prediction_mechanism = self.controller.origin_prediction_mechanisms[mech]
-        #         for proj in prediction_mechanism.path_afferents:
-        #             prediction_process = Process(pathway=[proj.sender.owner,
-        #                                                   proj,
-        #                                                   prediction_mechanism],
-        #                                          learning=ENABLED,
-        #                                          learning_rate=learning_rates[i],
-        #                                          name="Prediction")
-        #             self.processes.append(prediction_process)
-        # self._instantiate_processes(context="ADDING PREDICTION LEARNING")
+        for i in range(len(origin_mechanisms)):
+            mech = origin_mechanisms[i]
+            if mech in self.controller.origin_prediction_mechanisms:
+                origin_mechanism = mech
+                prediction_mechanism = self.controller.origin_prediction_mechanisms[mech]
+                for proj in prediction_mechanism.path_afferents:
+                    prediction_process = Process(pathway=[proj.sender.owner,
+                                                          proj,
+                                                          prediction_mechanism],
+                                                 learning=ENABLED,
+                                                 learning_rate=learning_rates[i],
+                                                 name="Prediction")
+                    self.processes.append(prediction_process)
+        self._instantiate_processes(context="ADDING PREDICTION LEARNING")
+        self._instantiate_learning_graph(context="ADDING PREDICTION LEARNING")
+
+        # if isinstance(self.controller, ControlMechanism):
+        #     for mech in origin_mechanisms:
+        #         if mech in self.controller.origin_prediction_mechanisms:
+        #             origin_mechanism = mech
+        #             for proj in self.controller.origin_prediction_mechanisms[mech].path_afferents:
+        #                 learned_projection = proj
+        #                 sender = proj.sender
+        #                 prediction_mechanism = self.controller.origin_prediction_mechanisms[mech]
+        #
+        #                 from psyneulink.components.functions.function import Reinforcement
+        #                 from psyneulink.library.mechanisms.processing.objective.comparatormechanism import ComparatorMechanism
+        #                 from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
+        #                 from psyneulink.globals.keywords import NAME, VARIABLE
+        #                 learning_function = Reinforcement(
+        #                     # default_variable=[[0.], [0.], [0.]]
+        #                                                     )
+        #                 learning_projection = LearningProjection(receiver=learned_projection.parameter_states[MATRIX],
+        #                                                          learning_function=learning_function,
+        #                                                          name="learning_projection")
+        #                 learning_projection.receiver = learned_projection.parameter_states[MATRIX]
+        #
+        #                 error_source = ComparatorMechanism(sample={NAME: SAMPLE,
+        #                                                            VARIABLE: prediction_mechanism.variable,
+        #                                                            PROJECTIONS: [prediction_mechanism.output_state]},
+        #                                                     target={NAME: TARGET,
+        #                                                             VARIABLE: prediction_mechanism.variable,
+        #                                                             PROJECTIONS: [origin_mechanism.output_state]},
+        #                                                     name="comparator_mechanism")
+        #
+        #                 learning_mechanism = LearningMechanism(
+        #                                                        error_sources=[error_source],
+        #                                                        learning_signals=[learning_projection],
+        #                                                        function=learning_function,
+        #                                                        name="learning_mechanism_test",
+        #                                                        context="testing"
+        #                                                        )
+        #
+        #                 activation_input_projection = MappingProjection(sender=sender,
+        #                                                                 receiver=learning_mechanism.input_states[0])
+        #                 activation_output_projection = MappingProjection(sender=prediction_mechanism,
+        #                                                                  receiver=learning_mechanism.input_states[1])
+        #                 error_signal_projection = MappingProjection(sender=error_source,
+        #                                                             receiver=learning_mechanism.input_states[2])
+        #
         # self._instantiate_learning_graph(context="ADDING PREDICTION LEARNING")
 
-        if isinstance(self.controller, ControlMechanism):
-            for mech in origin_mechanisms:
-                if mech in self.controller.origin_prediction_mechanisms:
-                    origin_mechanism = mech
-                    for proj in self.controller.origin_prediction_mechanisms[mech].path_afferents:
-                        learned_projection = proj
-                        sender = proj.sender
-                        prediction_mechanism = self.controller.origin_prediction_mechanisms[mech]
-
-                        from psyneulink.components.functions.function import Reinforcement
-                        from psyneulink.library.mechanisms.processing.objective.comparatormechanism import ComparatorMechanism
-                        from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
-                        from psyneulink.globals.keywords import NAME, VARIABLE
-                        learning_function = Reinforcement(
-                            # default_variable=[[0.], [0.], [0.]]
-                                                            )
-                        learning_projection = LearningProjection(receiver=learned_projection.parameter_states[MATRIX],
-                                                                 learning_function=learning_function,
-                                                                 name="learning_projection")
-                        learning_projection.receiver = learned_projection.parameter_states[MATRIX]
-
-                        error_source = ComparatorMechanism(sample={NAME: SAMPLE,
-                                                                   VARIABLE: prediction_mechanism.variable,
-                                                                   PROJECTIONS: [prediction_mechanism.output_state]},
-                                                            target={NAME: TARGET,
-                                                                    VARIABLE: prediction_mechanism.variable,
-                                                                    PROJECTIONS: [origin_mechanism.output_state]},
-                                                            name="comparator_mechanism")
-
-                        learning_mechanism = LearningMechanism(
-                                                               error_sources=[error_source],
-                                                               learning_signals=[learning_projection],
-                                                               function=learning_function,
-                                                               name="learning_mechanism_test",
-                                                               context="testing"
-                                                               )
-
-                        activation_input_projection = MappingProjection(sender=sender,
-                                                                        receiver=learning_mechanism.input_states[0])
-                        activation_output_projection = MappingProjection(sender=prediction_mechanism,
-                                                                         receiver=learning_mechanism.input_states[1])
-                        error_signal_projection = MappingProjection(sender=error_source,
-                                                                    receiver=learning_mechanism.input_states[2])
-
-        self._instantiate_learning_graph(context="ADDING PREDICTION LEARNING")
         #
         # else:
         #     raise SystemError("{} does not have a valid controller.".format(self.name))

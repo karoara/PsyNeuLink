@@ -187,9 +187,8 @@ def test_learn_over_prediction_process():
         Reward: [20, 20]
     }
 
-    mySystem.add_prediction_learning([Input, Reward], [0.3481, 0.3481])
-    # mySystem.show_graph(show_learning=True)
-    print("TARGETS = ", mySystem.targets)
+    # mySystem.add_prediction_learning([Input, Reward], [0.3481, 0.3481])
+    mySystem.show_graph(show_learning=True)
     print(mySystem.controller.prediction_mechanisms)
     target_list_dict = {
         mySystem.controller.prediction_mechanisms[1]: [0.5, 0.123],
@@ -200,10 +199,10 @@ def test_learn_over_prediction_process():
     def check_intermediate_values():
         input_mechanism_values.append(Input.value)
         # reward_mechanism_values.append(Reward.value)
-    mySystem.learning = True
+    # mySystem.learning = True
     mySystem.run(inputs=stim_list_dict,
                  # targets=target_list_dict,
-                 learning=True,
+                 # learning=True,
                  call_after_trial=check_intermediate_values)
 
     RewardPrediction = mySystem.execution_list[3]

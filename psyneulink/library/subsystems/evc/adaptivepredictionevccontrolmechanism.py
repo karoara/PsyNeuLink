@@ -795,6 +795,9 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
             prediction_mechanism._role = CONTROL
             prediction_mechanism.origin_mech = origin_mech
 
+            # prediction_input_mechanism._role = CONTROL
+            # prediction_input_mechanism.origin_mech = origin_mech
+
             # Assign projections TO prediction_mechanism that duplicate those received by origin_mech
             #    (this includes those from ProcessInputState, SystemInputState and/or recurrent ones
             # Should only be executed during processing!
@@ -805,18 +808,18 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
                 for projection in original_path_afferents:
                     # projections from system/process input states to prediction input mechanisms
                     MappingProjection(sender=projection.sender,
-                                      receiver=prediction_mechanism,
-                                      # receiver=prediction_input_mechanism,
+                                      # receiver=prediction_mechanism,
+                                      receiver=prediction_input_mechanism,
                                       matrix=projection.matrix)
 
 
-                # # projections from prediction input mechanisms to prediction mechanisms
-                # MappingProjection(sender=prediction_input_mechanism,
-                #                   receiver=prediction_mechanism)
+                # projections from prediction input mechanisms to prediction mechanisms
+                MappingProjection(sender=prediction_input_mechanism,
+                                  receiver=prediction_mechanism)
 
-                # projections from prediction mechanisms to origin mechanisms
-                PredictionProjection(sender=prediction_mechanism,
-                                     receiver=orig_input_state)
+                # # projections from prediction mechanisms to origin mechanisms
+                # PredictionProjection(sender=prediction_mechanism,
+                #                      receiver=orig_input_state)
 
                 # tuple specfication of learning: matrix=(projection.matrix, LEARNING)
 
@@ -833,9 +836,14 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
             self.prediction_mechs.append(prediction_mechanism)
 
             # Add to system execution_graph and execution_list
+
+            system.execution_graph[prediction_input_mechanism] = set()
+            system.execution_list.append(prediction_input_mechanism)
+
             system.execution_graph[prediction_mechanism] = set()
             system.execution_list.append(prediction_mechanism)
 
+            print(system.execution_list)
         self.prediction_mechanisms = MechanismList(self, self.prediction_mechs)
 
         # Assign list of destinations for predicted_inputs:
@@ -894,7 +902,9 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
 
         placeholder_inputs = {}
         for origin_mech in self.system.origin_mechanisms:
-            placeholder_inputs[origin_mech] = 0.0*origin_mech.instance_defaults.variable
+            # placeholder_inputs[origin_mech] = 0.0*origin_mech.instance_defaults.variable
+            prediction_mechanism = self.origin_prediction_mechanisms[origin_mech]
+            placeholder_inputs[origin_mech] = prediction_mechanism.value
         self.predicted_input = placeholder_inputs
 
     def run_simulation(self,
@@ -919,10 +929,10 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
 
         """
 
-        original_smoothing_factors = {}
-        for prediction_mechanism in self.prediction_mechanisms:
-            original_smoothing_factors[prediction_mechanism] = prediction_mechanism.smoothing_factor
-            prediction_mechanism.smoothing_factor = 0.0
+        # original_smoothing_factors = {}
+        # for prediction_mechanism in self.prediction_mechanisms:
+        #     original_smoothing_factors[prediction_mechanism] = prediction_mechanism.smoothing_factor
+        #     prediction_mechanism.smoothing_factor = 0.0
 
 
         if self.value is None:
@@ -946,8 +956,8 @@ class AdaptivePredictionEVCControlMechanism(EVCControlMechanism):
         for i in range(len(self.control_signals)):
             self.control_signal_costs[i] = self.control_signals[i].cost
 
-        for prediction_mechanism in self.prediction_mechanisms:
-            prediction_mechanism.smoothing_factor = original_smoothing_factors[prediction_mechanism]
+        # for prediction_mechanism in self.prediction_mechanisms:
+        #     prediction_mechanism.smoothing_factor = original_smoothing_factors[prediction_mechanism]
 
         return monitored_states
 
