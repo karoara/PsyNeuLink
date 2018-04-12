@@ -109,8 +109,8 @@ def test_EVC():
         inputs=stim_list_dict,
     )
 
-    RewardPrediction = mySystem.execution_list[3]
-    InputPrediction = mySystem.execution_list[4]
+    RewardPrediction = mySystem.execution_list[5]
+    InputPrediction = mySystem.execution_list[6]
 
     # rearranging mySystem.results into a format that we can compare with pytest
     results_array = []
@@ -582,9 +582,9 @@ def test_laming_validation_specify_control_signals():
     mySystem.run(
         inputs=stim_list_dict
     )
-
-    RewardPrediction = mySystem.execution_list[3]
-    InputPrediction = mySystem.execution_list[4]
+    print(mySystem.execution_list)
+    RewardPrediction = mySystem.execution_list[5]
+    InputPrediction = mySystem.execution_list[6]
 
     # rearranging mySystem.results into a format that we can compare with pytest
     results_array = []
@@ -593,7 +593,7 @@ def test_laming_validation_specify_control_signals():
         for inner_elem in elem:
             elem_array.append(float(inner_elem))
         results_array.append(elem_array)
-
+    print(results_array)
     # mySystem.results expected output properly formatted
     expected_results_array = [
         [10., 10.0, 0.0, -0.1, 0.48999867, 0.50499983],
