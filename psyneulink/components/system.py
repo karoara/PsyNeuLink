@@ -3946,7 +3946,8 @@ class System(System_Base):
             return G
 
     def add_prediction_learning(self, origin_mechanisms, learning_rates):
-        from psyneulink.globals.keywords import ENABLED
+        from psyneulink.components.functions.function import Reinforcement
+        from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
         for i in range(len(origin_mechanisms)):
             mech = origin_mechanisms[i]
             if mech in self.controller.origin_prediction_mechanisms:
@@ -3955,7 +3956,7 @@ class System(System_Base):
                     prediction_process = Process(pathway=[proj.sender.owner,
                                                           proj,
                                                           prediction_mechanism],
-                                                 learning=ENABLED,
+                                                 learning=LearningProjection(learning_function=Reinforcement(learning_rate=learning_rates[i])),
                                                  learning_rate=learning_rates[i],
                                                  name="Prediction")
                     self.processes.append(prediction_process)
