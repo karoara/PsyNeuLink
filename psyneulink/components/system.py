@@ -3957,7 +3957,6 @@ class System(System_Base):
                                                           proj,
                                                           prediction_mechanism],
                                                  learning=LearningProjection(learning_function=Reinforcement(learning_rate=learning_rates[i])),
-                                                 learning_rate=learning_rates[i],
                                                  name="Prediction")
                     self.processes.append(prediction_process)
         self._instantiate_processes(context="ADDING PREDICTION LEARNING")

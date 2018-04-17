@@ -1190,17 +1190,24 @@ def test_gratton_with_learning_via_PNL_RL():
     stimulus_dict = {Flanker_Stim: flankerFeatures,
                      Reward: reward,
                      Target_Stim: targetFeatures}
-
-    mySystem.add_prediction_learning([Target_Stim, Flanker_Stim, Reward], [0.0, 0.3481, 0.0])
+    target_learning_rate = 0.3481
+    mySystem.add_prediction_learning([Target_Stim, Flanker_Stim, Reward], [target_learning_rate, target_learning_rate, target_learning_rate])
     mySystem.learning = True
-    # mySystem.controller.prediction_mechanisms.mechanisms[0].path_afferents[0].matrix = [[0.3038]]
+    mySystem.controller.prediction_mechanisms.mechanisms[0].path_afferents[0].matrix = [[1]]
+    mySystem.controller.prediction_mechanisms.mechanisms[1].path_afferents[0].matrix = [[1]]
+    mySystem.controller.prediction_mechanisms.mechanisms[2].path_afferents[0].matrix = [[1]]
     target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
                    mySystem.controller.prediction_mechanisms[1]: reward,
                    mySystem.controller.prediction_mechanisms[2]: targetFeatures}
-
     Target_Rep.set_log_conditions('slope')
 
     def update_rate_values():
+        # mySystem.learning_mechanisms[3].learning_rate = target_learning_rate
+        # mySystem.learning_mechanisms[4].learning_rate = target_learning_rate
+        # mySystem.learning_mechanisms[5].learning_rate = target_learning_rate
+        print(mySystem.controller.prediction_mechanisms.mechanisms[0].variable)
+        print(mySystem.controller.prediction_mechanisms.mechanisms[1].variable)
+        print(mySystem.controller.prediction_mechanisms.mechanisms[2].variable)
         print(mySystem.controller.prediction_mechanisms.mechanisms[0].value)
         print(mySystem.controller.prediction_mechanisms.mechanisms[1].value)
         print(mySystem.controller.prediction_mechanisms.mechanisms[2].value)
@@ -1222,7 +1229,7 @@ def test_gratton_with_learning_via_PNL_RL():
     D_value = Decision.log.nparray_dictionary('value')
     P = mySystem.controller.objective_mechanism.log.nparray_dictionary('PROBABILITY_UPPER_THRESHOLD')
     print("decision input: \n", D['InputState-0'])
-    print("decision value: \n", D_value['value'])
+    # print("decision value: \n", D_value['value'])
     print("prob upper threshold: \n", P['PROBABILITY_UPPER_THRESHOLD'])
     # assert np.allclose(D['InputState-0'],
     #                    np.array([[1.3738],
