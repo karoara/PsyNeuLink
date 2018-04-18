@@ -1012,10 +1012,6 @@ def test_gratton_with_learning_via_smoothing_factor():
                      Reward: reward,
                      Target_Stim: targetFeatures}
 
-    target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
-                   mySystem.controller.prediction_mechanisms[1]: reward,
-                   mySystem.controller.prediction_mechanisms[2]: targetFeatures}
-
     Target_Rep.set_log_conditions('slope')
 
     def update_rate_values():
@@ -1025,6 +1021,9 @@ def test_gratton_with_learning_via_smoothing_factor():
         mySystem.controller.prediction_mechanisms.mechanisms[0].smoothing_factor = 0.3481
         mySystem.controller.prediction_mechanisms.mechanisms[1].smoothing_factor = 0.3481  # reward rate
         mySystem.controller.prediction_mechanisms.mechanisms[2].smoothing_factor = 0.3481
+
+        print("Target Slope: ", Target_Rep.mod_slope)
+        print("Flanker Slope: ", Flanker_Rep.mod_slope)
 
     mySystem.run(call_after_trial=update_rate_values,
                  num_trials=nTrials,
@@ -1059,13 +1058,12 @@ def test_gratton_with_learning_via_PNL_RL():
     # Control Parameters
     signalSearchRange = np.arange(1.0, 2.1, 0.5)  # why 0.8 to 2.0 in increments of 0.2
 
-    test_mech = TransferMechanism(size=1)
-
     # Stimulus Mechanisms
     Target_Stim = TransferMechanism(name='Target Stimulus', function=Linear(slope=0.3324))
-    Target_Stim.set_log_conditions('value')
+    Target_Stim.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+
     Flanker_Stim = TransferMechanism(name='Flanker Stimulus', function=Linear(slope=0.3545))
-    Flanker_Stim.set_log_conditions('value')
+    Flanker_Stim.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
 
     # Processing Mechanisms (Control)
     Target_Rep = TransferMechanism(name='Target Representation',
@@ -1075,25 +1073,22 @@ def test_gratton_with_learning_via_PNL_RL():
                                                ALLOCATION_SAMPLES: signalSearchRange}))),
                                    prefs={LOG_PREF: PreferenceEntry(LogCondition.INITIALIZATION,
                                                                     PreferenceLevel.INSTANCE)})
-    Target_Rep.set_log_conditions('value')  # Log Target_Rep
-    Target_Rep.set_log_conditions('slope')  # Log Target_Rep
 
-    # log initialization
-    Target_Rep.log.LogCondition = 2
+    Target_Rep.set_log_conditions('value',
+                                  # LogCondition.SIMULATION + LogCondition.EXECUTION
+                                  )
+
 
     Flanker_Rep = TransferMechanism(name='Flanker Representation',
                                     function=Linear(
                                         slope=(1.0, ControlProjection(
                                             control_signal_params={
                                                 ALLOCATION_SAMPLES: signalSearchRange}))))
-    Flanker_Rep.set_log_conditions('value')  # Log Flanker_Rep
-    Flanker_Rep.set_log_conditions('slope')  # Log Flanker_Rep
-
-    Target_Rep.log.LogCondition = 2
+    Flanker_Rep.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
 
     # Processing Mechanism (Automatic)
     Automatic_Component = TransferMechanism(name='Automatic Component', function=Linear)
-    Automatic_Component.set_log_conditions('value')
+    Automatic_Component.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
 
     # Decision Mechanisms
     Decision = DDM(function=BogaczEtAl(drift_rate=1.0,
@@ -1106,18 +1101,11 @@ def test_gratton_with_learning_via_PNL_RL():
                                   {NAME: 'OFFSET_RT',
                                    VARIABLE: (OWNER_VALUE, 1),
                                    FUNCTION: Linear(0, slope=0.0, intercept=1).function}])
-
-    Decision.set_log_conditions('DECISION_VARIABLE', LogCondition.SIMULATION + LogCondition.EXECUTION)
-    Decision.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
     Decision.set_log_conditions('PROBABILITY_UPPER_THRESHOLD', LogCondition.SIMULATION + LogCondition.EXECUTION)
     Decision.set_log_conditions('InputState-0', LogCondition.SIMULATION + LogCondition.EXECUTION)
-    Decision.set_log_conditions('drift_rate', LogCondition.SIMULATION + LogCondition.EXECUTION)
-    Decision.set_log_conditions('OFFSET_RT', LogCondition.SIMULATION + LogCondition.EXECUTION)
-    Decision.set_log_conditions('RESPONSE_TIME', LogCondition.SIMULATION + LogCondition.EXECUTION)
-
     # Outcome Mechanisms:
     Reward = TransferMechanism(name='Reward')
-    Reward.set_log_conditions('value')
+
     # Processes:
     TargetControlProcess = Process(default_variable=[0],
                                    pathway=[Target_Stim, Target_Rep, Decision],
@@ -1136,7 +1124,7 @@ def test_gratton_with_learning_via_PNL_RL():
                                       name='Flanker1 Automatic Process')
 
     RewardProcess = Process(default_variable=[0],
-                            pathway=[Reward, test_mech],
+                            pathway=[Reward],
                             name='RewardProcess')
 
     # System:
@@ -1153,32 +1141,9 @@ def test_gratton_with_learning_via_PNL_RL():
                                            ('OFFSET_RT', 1, -1)],
                       name='EVC Markus System')
 
-    # log input state of mySystem
-    mySystem.controller.set_log_conditions('InputState-0')
-    mySystem.controller.set_log_conditions('value')
-
-    mySystem.controller.set_log_conditions('Flanker Representation[slope] ControlSignal')
-    mySystem.controller.set_log_conditions('Target Representation[slope] ControlSignal')
-
-    mySystem.controller.objective_mechanism.set_log_conditions('value',
-                                                               LogCondition.SIMULATION + LogCondition.EXECUTION)
-    mySystem.controller.objective_mechanism.set_log_conditions('OFFSET_RT',
-                                                               LogCondition.SIMULATION + LogCondition.EXECUTION)
-
-    mySystem.controller.objective_mechanism.set_log_conditions('PROBABILITY_UPPER_THRESHOLD',
-                                                               LogCondition.SIMULATION + LogCondition.EXECUTION)  # print('current input value',mySystem.controller.input_states.values)
-
     # configure EVC components
     mySystem.controller.control_signals[0].intensity_cost_function = Exponential(rate=0.8046).function
     mySystem.controller.control_signals[1].intensity_cost_function = Exponential(rate=0.8046).function
-
-    mySystem.controller.prediction_mechanisms.mechanisms[0].integrator_mode = False  # Flanker
-    mySystem.controller.prediction_mechanisms.mechanisms[1].integrator_mode = False  # Reward
-    mySystem.controller.prediction_mechanisms.mechanisms[2].integrator_mode = False  # Target
-
-    # mySystem.controller.prediction_mechanisms.mechanisms[0].smoothing_factor = 1.0  # Flanker
-    # mySystem.controller.prediction_mechanisms.mechanisms[1].smoothing_factor = 1.0  # Reward
-    # mySystem.controller.prediction_mechanisms.mechanisms[2].smoothing_factor = 1.0  # Target
 
     # generate stimulus environment: remember that we add one congruent stimulus infront of actuall stimulus list
     # compatible with MATLAB stimulus list for initialization
@@ -1190,47 +1155,66 @@ def test_gratton_with_learning_via_PNL_RL():
     stimulus_dict = {Flanker_Stim: flankerFeatures,
                      Reward: reward,
                      Target_Stim: targetFeatures}
-    target_learning_rate = 0.3481
-    mySystem.add_prediction_learning([Target_Stim, Flanker_Stim, Reward], [target_learning_rate, target_learning_rate, target_learning_rate])
+
+    def get_target_value():
+        return Target_Stim.output_states[0].value
+    def get_flanker_value():
+        return Flanker_Stim.output_states[0].value
+
+    learning_rate = 0.3481
+    mySystem.add_prediction_learning([Target_Stim, Flanker_Stim, Reward],
+                                     [learning_rate, learning_rate, learning_rate])
+
+    # Turn off integration on all prediction mechanisms - learning will take care of this
+    mySystem.controller.prediction_mechanisms[0].integrator_mode = False  # Flanker
+    mySystem.controller.prediction_mechanisms[1].integrator_mode = False  # Reward
+    mySystem.controller.prediction_mechanisms[2].integrator_mode = False  # Target
+
     mySystem.learning = True
-    mySystem.controller.prediction_mechanisms.mechanisms[0].path_afferents[0].matrix = [[1]]
-    mySystem.controller.prediction_mechanisms.mechanisms[1].path_afferents[0].matrix = [[1]]
-    mySystem.controller.prediction_mechanisms.mechanisms[2].path_afferents[0].matrix = [[1]]
-    target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
+
+    # target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
+    #                mySystem.controller.prediction_mechanisms[1]: reward,
+    #                mySystem.controller.prediction_mechanisms[2]: targetFeatures}
+    target_dict = {mySystem.controller.prediction_mechanisms[0]: get_flanker_value,
                    mySystem.controller.prediction_mechanisms[1]: reward,
-                   mySystem.controller.prediction_mechanisms[2]: targetFeatures}
-    Target_Rep.set_log_conditions('slope')
+                   mySystem.controller.prediction_mechanisms[2]: get_target_value}
 
+    count = []
     def update_rate_values():
-        # mySystem.learning_mechanisms[3].learning_rate = target_learning_rate
-        # mySystem.learning_mechanisms[4].learning_rate = target_learning_rate
-        # mySystem.learning_mechanisms[5].learning_rate = target_learning_rate
-        print(mySystem.controller.prediction_mechanisms.mechanisms[0].variable)
-        print(mySystem.controller.prediction_mechanisms.mechanisms[1].variable)
-        print(mySystem.controller.prediction_mechanisms.mechanisms[2].variable)
-        print(mySystem.controller.prediction_mechanisms.mechanisms[0].value)
-        print(mySystem.controller.prediction_mechanisms.mechanisms[1].value)
-        print(mySystem.controller.prediction_mechanisms.mechanisms[2].value)
-        # print(mySystem.controller.prediction_mechanisms.mechanisms[0].path_afferents[0].mod_matrix)
-        # print(mySystem.controller.prediction_mechanisms.mechanisms[1].path_afferents[0].mod_matrix)
-        # print(mySystem.controller.prediction_mechanisms.mechanisms[2].path_afferents[0].mod_matrix)
-        # mySystem.controller.prediction_mechanisms.mechanisms[0].smoothing_factor = 0.3481
-        # mySystem.controller.prediction_mechanisms.mechanisms[1].smoothing_factor = 0.3481  # reward rate
-        # mySystem.controller.prediction_mechanisms.mechanisms[2].smoothing_factor = 0.3481
+        mySystem.learning_mechanisms[3].learning_rate = learning_rate
+        mySystem.learning_mechanisms[4].learning_rate = learning_rate
+        mySystem.learning_mechanisms[5].learning_rate = learning_rate
 
-
+        print("\n\nTrial ", len(count), " - - - - - - - ")
+        count.append(1)
+        print("Target Stimulus: ", Target_Stim.value)
+        print("Flanker Stimulus: ", Flanker_Stim.value)
+        print("Reward: ", Reward.value)
+        print("Target Slope: ", Target_Rep.function_object.slope)
+        print("Flanker Slope: ", Flanker_Rep.function_object.slope)
     mySystem.run(call_after_trial=update_rate_values,
                  num_trials=nTrials,
                  inputs=stimulus_dict,
                  targets=target_dict)
     # targets=target_dict
-
+    mySystem.show_graph(show_learning=True, show_control=True)
     D = Decision.log.nparray_dictionary('InputState-0')
-    D_value = Decision.log.nparray_dictionary('value')
-    P = mySystem.controller.objective_mechanism.log.nparray_dictionary('PROBABILITY_UPPER_THRESHOLD')
+    # D_value = Decision.log.nparray_dictionary('value')
+    P = Decision.log.nparray_dictionary('PROBABILITY_UPPER_THRESHOLD')
     print("decision input: \n", D['InputState-0'])
-    # print("decision value: \n", D_value['value'])
+    # # print("decision value: \n", D_value['value'])
     print("prob upper threshold: \n", P['PROBABILITY_UPPER_THRESHOLD'])
+    Target_log = Target_Rep.log.nparray_dictionary('value')
+    Flanker_log = Flanker_Rep.log.nparray_dictionary('value')
+    Automatic_log = Automatic_Component.log.nparray_dictionary('value')
+    Target_Stim_log = Target_Stim.log.nparray_dictionary('value')
+    Flanker_Stim_log = Flanker_Stim.log.nparray_dictionary('value')
+    print("Target Log: \n\n", Target_log['value'])
+    print("Flanker Log: \n\n", Flanker_log['value'])
+    print("Automatic Log: \n\n", Automatic_log['value'])
+    print("Target Stimulus Log: \n\n", Target_Stim_log['value'])
+    print("Flanker Stimulus Log: \n\n", Flanker_Stim_log['value'])
+
     # assert np.allclose(D['InputState-0'],
     #                    np.array([[1.3738],
     #                              [1.55105],
