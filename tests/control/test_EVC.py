@@ -1156,11 +1156,6 @@ def test_gratton_with_learning_via_PNL_RL():
                      Reward: reward,
                      Target_Stim: targetFeatures}
 
-    def get_target_value():
-        return Target_Stim.output_states[0].value
-    def get_flanker_value():
-        return Flanker_Stim.output_states[0].value
-
     learning_rate = 0.3481
     mySystem.add_prediction_learning([Target_Stim, Flanker_Stim, Reward],
                                      [learning_rate, learning_rate, learning_rate])
@@ -1175,8 +1170,14 @@ def test_gratton_with_learning_via_PNL_RL():
     # target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
     #                mySystem.controller.prediction_mechanisms[1]: reward,
     #                mySystem.controller.prediction_mechanisms[2]: targetFeatures}
+    def get_target_value():
+        return Target_Stim.output_states[0].value
+    def get_flanker_value():
+        return Flanker_Stim.output_states[0].value
+    def get_reward_value():
+        return Reward.output_states[0].value
     target_dict = {mySystem.controller.prediction_mechanisms[0]: get_flanker_value,
-                   mySystem.controller.prediction_mechanisms[1]: reward,
+                   mySystem.controller.prediction_mechanisms[1]: get_reward_value,
                    mySystem.controller.prediction_mechanisms[2]: get_target_value}
 
     count = []
