@@ -3952,6 +3952,8 @@ class System(System_Base):
             mech = origin_mechanisms[i]
             if mech in self.controller.origin_prediction_mechanisms:
                 prediction_mechanism = self.controller.origin_prediction_mechanisms[mech]
+                if hasattr(prediction_mechanism, "integrator_mode"):
+                    prediction_mechanism.integrator_mode = False
                 for proj in prediction_mechanism.path_afferents:
                     prediction_process = Process(pathway=[proj.sender.owner,
                                                           proj,
