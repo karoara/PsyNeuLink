@@ -818,8 +818,7 @@ class EVCControlMechanism(ControlMechanism):
                                                             prediction_input_mechanism.input_states):
                 for projection in orig_input_state.path_afferents:
                     MappingProjection(sender=projection.sender,
-                                      receiver=prediction_input_input_state,
-                                      matrix=projection.matrix)
+                                      receiver=prediction_input_input_state)
 
             MappingProjection(sender=prediction_input_mechanism,
                               receiver=prediction_mechanism)
@@ -960,7 +959,7 @@ class EVCControlMechanism(ControlMechanism):
         for origin_mech in self.system.origin_mechanisms:
             # Get origin Mechanism for each process
             # Assign value of predictionMechanism to the entry of predicted_input for the corresponding ORIGIN Mechanism
-            self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].value
+            self.predicted_input[origin_mech] = np.ones_like(self.origin_prediction_mechanisms[origin_mech].value)
             # self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].output_state.value
 
     def run_simulation(self,

@@ -3952,8 +3952,11 @@ class System(System_Base):
             mech = origin_mechanisms[i]
             if mech in self.controller.origin_prediction_mechanisms:
                 prediction_mechanism = self.controller.origin_prediction_mechanisms[mech]
+
+                # Turn integrator mode off because the prediction now happens via RL
                 if hasattr(prediction_mechanism, "integrator_mode"):
                     prediction_mechanism.integrator_mode = False
+
                 for proj in prediction_mechanism.path_afferents:
                     prediction_process = Process(pathway=[proj.sender.owner,
                                                           proj,
@@ -3961,6 +3964,12 @@ class System(System_Base):
                                                  learning=LearningProjection(learning_function=Reinforcement(learning_rate=learning_rates[i])),
                                                  name="Prediction")
                     self.processes.append(prediction_process)
+
+                # store the origin mechanism so that we know how to assign its predicted inputs later
+                if hasattr(self, "prediction_learning_origin_mechanisms"):
+                    self.prediction_learning_origin_mechanisms.append(mech)
+                else:
+                    self.prediction_learning_origin_mechanisms = [mech]
         self._instantiate_processes(context="ADDING PREDICTION LEARNING")
         self._instantiate_learning_graph(context="ADDING PREDICTION LEARNING")
 
