@@ -959,16 +959,16 @@ class EVCControlMechanism(ControlMechanism):
         for origin_mech in self.system.origin_mechanisms:
             # Get origin Mechanism for each process
             # Assign value of predictionMechanism to the entry of predicted_input for the corresponding ORIGIN Mechanism
-            if hasattr(self.system, "prediction_learning_origin_mechanisms"):
-                if origin_mech in self.system.prediction_learning_origin_mechanisms:
-                    self.predicted_input[origin_mech] = \
-                        np.ones_like(self.origin_prediction_mechanisms[origin_mech].output_state.value)
-                else:
-                    self.predicted_input[origin_mech] = \
-                        self.origin_prediction_mechanisms[origin_mech].output_state.value
-
-            else:
-                self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].output_state.value
+            # if hasattr(self.system, "prediction_learning_origin_mechanisms"):
+            #     if origin_mech in self.system.prediction_learning_origin_mechanisms:
+            #         self.predicted_input[origin_mech] = \
+            #             np.ones_like(self.origin_prediction_mechanisms[origin_mech].output_state.value)
+            #     else:
+            #         self.predicted_input[origin_mech] = \
+            #             self.origin_prediction_mechanisms[origin_mech].output_state.value
+            #
+            # else:
+            self.predicted_input[origin_mech] = self.origin_prediction_mechanisms[origin_mech].output_state.value
 
     def run_simulation(self,
                        inputs,
