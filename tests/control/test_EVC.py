@@ -1332,7 +1332,6 @@ class TestGrattonWithRL:
 
         # generate stimulus environment: remember that we add one congruent stimulus infront of actuall stimulus list
         # compatible with MATLAB stimulus list for initialization
-        nTrials = 8
         targetFeatures = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
         flankerFeatures = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0]
         reward = [100, 100, 100, 100, 100, 100, 100, 100, 100]
@@ -1340,11 +1339,11 @@ class TestGrattonWithRL:
         stimulus_dict = {Flanker_Stim: flankerFeatures,
                          Reward: reward,
                          Target_Stim: targetFeatures}
-
+        # flankerFeatures
         target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
-                       mySystem.controller.prediction_mechanisms[1]: reward,
+                       mySystem.controller.prediction_mechanisms[1]: [100, 100, 100, 100, 100, 100, 100, 100, 100],
                        mySystem.controller.prediction_mechanisms[2]: targetFeatures}
-
+        from psyneulink.library.mechanisms.processing.objective.comparatormechanism import ComparatorMechanism
         # function to call after trial
         def update_rate_values():
 
@@ -1353,7 +1352,6 @@ class TestGrattonWithRL:
             mySystem.learning_mechanisms[5].learning_rate = learning_rate
 
         mySystem.run(call_after_trial=update_rate_values,
-                     num_trials=nTrials,
                      inputs=stimulus_dict,
                      targets=target_dict)
 
@@ -1530,6 +1528,9 @@ class TestGrattonWithRL:
         targetFeatures = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
         flankerFeatures = [1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0]
         reward = [100, 100, 100, 100, 100, 100, 100, 100]
+
+        for mech in mySystem.controller.prediction_mechanisms:
+            mech.integrator_mode = False
 
         stimulus_dict = {Flanker_Stim: flankerFeatures,
                          Reward: reward,
