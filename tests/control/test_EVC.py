@@ -1241,10 +1241,10 @@ class TestGrattonWithRL:
 
         # Stimulus Mechanisms
         Target_Stim = TransferMechanism(name='Target Stimulus', function=Linear(slope=0.3324))
-        Target_Stim.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Target_Stim.set_log_conditions('value', LogCondition.EXECUTION)
 
         Flanker_Stim = TransferMechanism(name='Flanker Stimulus', function=Linear(slope=0.3545))
-        Flanker_Stim.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Flanker_Stim.set_log_conditions('value', LogCondition.EXECUTION)
 
         # Processing Mechanisms (Control)
         Target_Rep = TransferMechanism(name='Target Representation',
@@ -1255,7 +1255,7 @@ class TestGrattonWithRL:
                                        prefs={LOG_PREF: PreferenceEntry(LogCondition.INITIALIZATION,
                                                                         PreferenceLevel.INSTANCE)})
         Target_Rep.set_log_conditions('value', LogCondition.EXECUTION
-                                      # LogCondition.SIMULATION + LogCondition.EXECUTION
+                                      # LogCondition.EXECUTION
                                       )
 
         Flanker_Rep = TransferMechanism(name='Flanker Representation',
@@ -1263,11 +1263,11 @@ class TestGrattonWithRL:
                                             slope=(1.0, ControlProjection(
                                                 control_signal_params={
                                                     ALLOCATION_SAMPLES: signalSearchRange}))))
-        Flanker_Rep.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Flanker_Rep.set_log_conditions('value', LogCondition.EXECUTION)
 
         # Processing Mechanism (Automatic)
         Automatic_Component = TransferMechanism(name='Automatic Component', function=Linear)
-        Automatic_Component.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Automatic_Component.set_log_conditions('value', LogCondition.EXECUTION)
 
         # Decision Mechanism
         Decision = DDM(function=BogaczEtAl(drift_rate=1.0,
@@ -1280,8 +1280,8 @@ class TestGrattonWithRL:
                                       {NAME: 'OFFSET_RT',
                                        VARIABLE: (OWNER_VALUE, 1),
                                        FUNCTION: Linear(0, slope=0.0, intercept=1).function}])
-        Decision.set_log_conditions('PROBABILITY_UPPER_THRESHOLD', LogCondition.SIMULATION + LogCondition.EXECUTION)
-        Decision.set_log_conditions('InputState-0', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Decision.set_log_conditions('PROBABILITY_UPPER_THRESHOLD', LogCondition.EXECUTION)
+        Decision.set_log_conditions('InputState-0', LogCondition.EXECUTION)
 
         # Outcome Mechanisms
         Reward = TransferMechanism(name='Reward')
@@ -1326,7 +1326,7 @@ class TestGrattonWithRL:
         mySystem.controller.control_signals[1].intensity_cost_function = Exponential(rate=0.8046).function
 
         # add learning over prediction processes
-        learning_rate = 0.3481
+        learning_rate = 1.0
         mySystem.add_prediction_learning([Target_Stim, Flanker_Stim, Reward],
                                          [1.0, 1.0, 1.0])
 
@@ -1341,15 +1341,27 @@ class TestGrattonWithRL:
                          Target_Stim: targetFeatures}
         # flankerFeatures
         target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
-                       mySystem.controller.prediction_mechanisms[1]: [100, 100, 100, 100, 100, 100, 100, 100, 100],
+                       mySystem.controller.prediction_mechanisms[1]: reward,
                        mySystem.controller.prediction_mechanisms[2]: targetFeatures}
-        from psyneulink.library.mechanisms.processing.objective.comparatormechanism import ComparatorMechanism
+        count = []
         # function to call after trial
         def update_rate_values():
-
+            print(" - - - - - - - trial ", len(count), " - - - - - - - - -")
+            count.append(1)
             mySystem.learning_mechanisms[3].learning_rate = learning_rate
             mySystem.learning_mechanisms[4].learning_rate = learning_rate
             mySystem.learning_mechanisms[5].learning_rate = learning_rate
+            # mySystem.controller.prediction_mechanisms[0].smoothing_factor = 0.3481
+            # mySystem.controller.prediction_mechanisms[1].smoothing_factor = 0.3481
+            # mySystem.controller.prediction_mechanisms[2].smoothing_factor = 0.3481
+            print("mod matrix")
+            print(mySystem.controller.prediction_mechanisms[0].path_afferents[0].mod_matrix)
+            print(mySystem.controller.prediction_mechanisms[1].path_afferents[0].mod_matrix)
+            print(mySystem.controller.prediction_mechanisms[2].path_afferents[0].mod_matrix)
+            print("matrix")
+            print(mySystem.controller.prediction_mechanisms[0].path_afferents[0].matrix)
+            print(mySystem.controller.prediction_mechanisms[1].path_afferents[0].matrix)
+            print(mySystem.controller.prediction_mechanisms[2].path_afferents[0].matrix)
 
         mySystem.run(call_after_trial=update_rate_values,
                      inputs=stimulus_dict,
@@ -1402,23 +1414,23 @@ class TestGrattonWithRL:
         Target_Stim = TransferMechanism(name='Target Stimulus', function=Linear(
                                                                                 # slope=0.3324
                                                                                 ))
-        Target_Stim.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Target_Stim.set_log_conditions('value', LogCondition.EXECUTION)
 
         Flanker_Stim = TransferMechanism(name='Flanker Stimulus', function=Linear(
                                                                                   # slope=0.3545
                                                                                   ))
-        Flanker_Stim.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Flanker_Stim.set_log_conditions('value', LogCondition.EXECUTION)
 
 
         # Secondary stimulus mechanisms
 
         Target_Stim2 = TransferMechanism(name='Target Stimulus', function=Linear())
 
-        Target_Stim2.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Target_Stim2.set_log_conditions('value', LogCondition.EXECUTION)
 
         Flanker_Stim2 = TransferMechanism(name='Flanker Stimulus', function=Linear())
 
-        Flanker_Stim2.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Flanker_Stim2.set_log_conditions('value', LogCondition.EXECUTION)
 
         # Prediction projections
         Target_Prediction = MappingProjection(sender=Target_Stim, receiver=Target_Stim2, matrix=[[0.3324]])
@@ -1434,7 +1446,7 @@ class TestGrattonWithRL:
                                        prefs={LOG_PREF: PreferenceEntry(LogCondition.INITIALIZATION,
                                                                         PreferenceLevel.INSTANCE)})
         Target_Rep.set_log_conditions('value', LogCondition.EXECUTION
-                                      # LogCondition.SIMULATION + LogCondition.EXECUTION
+                                      # LogCondition.EXECUTION
                                       )
 
         Flanker_Rep = TransferMechanism(name='Flanker Representation',
@@ -1442,11 +1454,11 @@ class TestGrattonWithRL:
                                             slope=(1.0, ControlProjection(
                                                 control_signal_params={
                                                     ALLOCATION_SAMPLES: signalSearchRange}))))
-        Flanker_Rep.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Flanker_Rep.set_log_conditions('value', LogCondition.EXECUTION)
 
         # Processing Mechanism (Automatic)
         Automatic_Component = TransferMechanism(name='Automatic Component', function=Linear)
-        Automatic_Component.set_log_conditions('value', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Automatic_Component.set_log_conditions('value', LogCondition.EXECUTION)
 
         # Decision Mechanism
         Decision = DDM(function=BogaczEtAl(drift_rate=1.0,
@@ -1459,8 +1471,8 @@ class TestGrattonWithRL:
                                       {NAME: 'OFFSET_RT',
                                        VARIABLE: (OWNER_VALUE, 1),
                                        FUNCTION: Linear(0, slope=0.0, intercept=1).function}])
-        Decision.set_log_conditions('PROBABILITY_UPPER_THRESHOLD', LogCondition.SIMULATION + LogCondition.EXECUTION)
-        Decision.set_log_conditions('InputState-0', LogCondition.SIMULATION + LogCondition.EXECUTION)
+        Decision.set_log_conditions('PROBABILITY_UPPER_THRESHOLD', LogCondition.EXECUTION)
+        Decision.set_log_conditions('InputState-0', LogCondition.EXECUTION)
 
         # Outcome Mechanisms
         Reward = TransferMechanism(name='Reward')
