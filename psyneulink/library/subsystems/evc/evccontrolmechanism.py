@@ -336,6 +336,7 @@ from psyneulink.components.mechanisms.processing.objectivemechanism import Objec
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.components.shellclasses import Function, System_Base
+from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import COMMAND_LINE, CONTROL, CONTROLLER, COST_FUNCTION, EVC_MECHANISM, FUNCTION, \
     INITIALIZING, INIT_FUNCTION_METHOD_ONLY, PARAMETER_STATES, PREDICTION_MECHANISM, PREDICTION_MECHANISMS, \
     PREDICTION_MECHANISM_PARAMS, PREDICTION_MECHANISM_TYPE, SUM
@@ -997,9 +998,6 @@ class EVCControlMechanism(ControlMechanism):
 
         """
 
-        # FIX: 3/30/18:
-        # self.context.execution_phase = ContextFlags.SIMULATION
-
         if self.value is None:
             # Initialize value if it is None
             self.value = np.empty(len(self.control_signals))
@@ -1011,10 +1009,9 @@ class EVCControlMechanism(ControlMechanism):
             self.value[i] = np.atleast_1d(allocation_vector[i])
         self._update_output_states(runtime_params=runtime_params, context=context)
 
+        self.system.context.execution_phase = ContextFlags.SIMULATION
         self.system.run(inputs=inputs, context=context)
-
-        # FIX: 3/30/18:
-        # self.context.execution_phase = ContextFlags.IDLE
+        self.system.context.execution_phase = ContextFlags.IDLE
 
         # Get outcomes for current allocation_policy
         #    = the values of the monitored output states (self.input_states)
