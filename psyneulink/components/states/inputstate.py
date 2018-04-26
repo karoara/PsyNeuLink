@@ -703,6 +703,8 @@ class InputState(State_Base):
 
     class ClassDefaults(State_Base.ClassDefaults):
         function = LinearCombination(operation=SUM, owner=CLASS_DEFAULTS)
+        weight = None
+        exponent = None
 
     paramClassDefaults = State_Base.paramClassDefaults.copy()
     paramClassDefaults.update({PROJECTION_TYPE: MAPPING_PROJECTION,

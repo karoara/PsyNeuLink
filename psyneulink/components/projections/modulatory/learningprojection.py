@@ -406,6 +406,7 @@ class LearningProjection(ModulatoryProjection_Base):
 
     class ClassDefaults(ModulatoryProjection_Base.ClassDefaults):
         function = Linear
+        learning_rate = None
 
     paramClassDefaults = Projection_Base.paramClassDefaults.copy()
     paramClassDefaults.update({PROJECTION_SENDER: LearningMechanism,

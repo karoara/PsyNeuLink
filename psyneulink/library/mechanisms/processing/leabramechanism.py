@@ -199,8 +199,8 @@ class LeabraFunction(Function_Base):
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
-    class ClassDefaults(Function_Base.ClassDefaults):
-        variable = [[0], [0]]
+    class Params(Function_Base.Params):
+        variable = np.array([[0], [0]])
 
     def __init__(self,
                  default_variable=None,

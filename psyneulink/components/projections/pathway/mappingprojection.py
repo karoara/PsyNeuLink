@@ -439,6 +439,7 @@ class MappingProjection(PathwayProjection_Base):
 
     class ClassDefaults(PathwayProjection_Base.ClassDefaults):
         function = LinearMatrix
+        matrix = DEFAULT_MATRIX
 
     classPreferenceLevel = PreferenceLevel.TYPE
 
@@ -460,6 +461,7 @@ class MappingProjection(PathwayProjection_Base):
     paramClassDefaults.update({FUNCTION: LinearMatrix,
                                PROJECTION_SENDER: OutputState,
                                })
+
     @tc.typecheck
     def __init__(self,
                  sender=None,

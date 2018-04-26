@@ -608,6 +608,10 @@ class Function_Base(Function):
     # Note: the following enforce encoding as 1D np.ndarrays (one array per variable)
     variableEncodingDim = 1
 
+    class ClassDefaults(Function.ClassDefaults):
+        function_output_type = None
+        function_output_type_conversion = False
+
     paramClassDefaults = Function.paramClassDefaults.copy()
     paramClassDefaults.update({
         FUNCTION_OUTPUT_TYPE_CONVERSION: False,  # Enable/disable output type conversion
@@ -1597,6 +1601,10 @@ class Reduce(CombinationFunction):  # ------------------------------------------
     multiplicative_param = SCALE
     additive_param = OFFSET
 
+    class Params(CombinationFunction.Params):
+        weights = None
+        exponents = None
+
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
     @tc.typecheck
@@ -1937,6 +1945,10 @@ class LinearCombination(CombinationFunction):  # -------------------------------
     additive_param = OFFSET
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(CombinationFunction.Params):
+        weights = None
+        exponents = None
 
     @tc.typecheck
     def __init__(self,
@@ -2934,6 +2946,11 @@ class Linear(TransferFunction):  # ---------------------------------------------
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE),
     }
 
+    class ClassDefaults(TransferFunction.ClassDefaults):
+        # Params
+        slope = 1.0
+        intercept = 0.0
+
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
         FUNCTION_OUTPUT_TYPE_CONVERSION: True,
@@ -3148,6 +3165,10 @@ class Exponential(TransferFunction):  # ----------------------------------------
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
+    class Params(TransferFunction.Params):
+        rate = 1.0
+        scale = 1.0
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -3301,6 +3322,10 @@ class Logistic(TransferFunction):  # -------------------------------------------
     additive_param = BIAS
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(TransferFunction.Params):
+        gain = 1.0
+        bias = 0.0
 
     @tc.typecheck
     def __init__(self,
@@ -3709,8 +3734,9 @@ class SoftMax(NormalizingFunction):
     multiplicative_param = GAIN
     additive_param = None
 
-    class ClassDefaults(NormalizingFunction.ClassDefaults):
-        variable = 0
+    class Params(NormalizingFunction.Params):
+        variable = np.array(0)
+        gain = 1.0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -3979,6 +4005,9 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
     DEFAULT_FILLER_VALUE = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
+
+    class Params(TransferFunction.Params):
+        matrix = None
 
     # def is_matrix_spec(m):
     #     if m is None:
@@ -4557,6 +4586,11 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
 
     componentName = INTEGRATOR_FUNCTION
 
+    class ClassDefaults(IntegratorFunction.ClassDefaults):
+        noise = 0.0
+        rate = 1.0
+        previous_value = None
+
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
@@ -4949,6 +4983,9 @@ class SimpleIntegrator(
 
     multiplicative_param = RATE
     additive_param = OFFSET
+
+    class Params(Integrator.Params):
+        offset = None
 
     @tc.typecheck
     def __init__(self,
@@ -5354,6 +5391,13 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
 
     componentName = CONSTANT_INTEGRATOR_FUNCTION
 
+    class ClassDefaults(Integrator.ClassDefaults):
+        # Params
+        offset = 0.0
+        scale = 1.0
+        rate = 0.0
+        noise = 0.0
+
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
@@ -5589,6 +5633,9 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
         NOISE: None,
         RATE: None
     })
+
+    class Params(Integrator.Params):
+        offset = 0.0
 
     @tc.typecheck
     def __init__(self,
@@ -5897,6 +5944,10 @@ class DriftDiffusionIntegrator(
     multiplicative_param = RATE
     additive_param = OFFSET
 
+    class Params(Integrator.Params):
+        t0 = 0.0
+        offset = 0.0
+
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
@@ -6152,6 +6203,10 @@ class OrnsteinUhlenbeckIntegrator(
 
     multiplicative_param = RATE
     additive_param = OFFSET
+
+    class Params(Integrator.Params):
+        t0 = 0.0
+        offset = 0.0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
@@ -7203,6 +7258,9 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
 
     componentName = ACCUMULATOR_INTEGRATOR_FUNCTION
 
+    class ClassDefaults(Integrator.ClassDefaults):
+        increment = None
+
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
@@ -7874,6 +7932,10 @@ class BogaczEtAl(
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
+    class Params(IntegratorFunction.Params):
+        drift_rate = 1.0
+        noise = 0.5
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -8173,6 +8235,10 @@ class NavarroAndFuss(IntegratorFunction):
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
+    class Params(IntegratorFunction.Params):
+        drift_rate = 1.0
+        noise = 0.5
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -8459,8 +8525,8 @@ class UniformToNormalDist(DistributionFunction):
 
     componentName = NORMAL_DIST_FUNCTION
 
-    class ClassDefaults(DistributionFunction.ClassDefaults):
-        variable = [0]
+    class Params(DistributionFunction.Params):
+        variable = np.array([0])
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
 
@@ -10403,8 +10469,8 @@ class TDLearning(Reinforcement):
     """
     componentName = TDLEARNING_FUNCTION
 
-    class ClassDefaults(Reinforcement.ClassDefaults):
-        variable = [[0], [0]]
+    class Params(Reinforcement.Params):
+        variable = np.array([[0], [0]])
 
     def __init__(self,
                  default_variable=Reinforcement.ClassDefaults.variable,

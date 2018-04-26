@@ -611,6 +611,8 @@ class RecurrentTransferMechanism(TransferMechanism):
 
     class ClassDefaults(TransferMechanism.ClassDefaults):
         variable = np.array([[0]])
+        auto = None
+        hetero = None
 
     paramClassDefaults = TransferMechanism.paramClassDefaults.copy()
 

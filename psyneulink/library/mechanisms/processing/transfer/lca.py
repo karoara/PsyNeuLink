@@ -500,8 +500,10 @@ class LCA(RecurrentTransferMechanism):
         # RATE: None,
         BETA: None
     })
-    class ClassDefaults(RecurrentTransferMechanism.ClassDefaults):
+
+    class Params(RecurrentTransferMechanism.Params):
         function = Logistic
+        competition = 1.0
 
     # paramClassDefaults[OUTPUT_STATES].append({NAME:MAX_VS_NEXT})
     # paramClassDefaults[OUTPUT_STATES].append({NAME:MAX_VS_AVG})
