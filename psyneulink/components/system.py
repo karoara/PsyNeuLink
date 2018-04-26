@@ -438,7 +438,7 @@ import typecheck as tc
 
 from toposort import toposort, toposort_flatten
 
-from psyneulink.components.component import Component
+from psyneulink.components.component import Component, Param
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism, OBJECTIVE_MECHANISM
 from psyneulink.components.mechanisms.adaptive.learning.learningauxiliary import _assign_error_signal_projections, _get_learning_mechanisms
 from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import LearningMechanism, ERROR_SIGNAL
@@ -813,7 +813,7 @@ class System(System_Base):
     #     kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
 
     # Use inputValueSystemDefault as default input to process
-    class ClassDefaults(System_Base.ClassDefaults):
+    class Params(System_Base.Params):
         variable = None
 
     paramClassDefaults = Component.paramClassDefaults.copy()

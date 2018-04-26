@@ -701,7 +701,7 @@ class InputState(State_Base):
     variableEncodingDim = 1
     valueEncodingDim = 1
 
-    class ClassDefaults(State_Base.ClassDefaults):
+    class Params(State_Base.Params):
         function = LinearCombination(operation=SUM, owner=CLASS_DEFAULTS)
         weight = None
         exponent = None
@@ -901,7 +901,7 @@ class InputState(State_Base):
         """
         self._instantiate_projections_to_state(projections=projections, context=context)
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
         """Call self.function with self._path_proj_values
 
         If there were no PathwayProjections, ignore and return None
@@ -909,6 +909,7 @@ class InputState(State_Base):
 
         if variable is not None:
             return super()._execute(variable,
+                                    execution_id=execution_id,
                                     runtime_params=runtime_params,
                                     context=context)
         # If there were any PathwayProjections:
@@ -923,6 +924,7 @@ class InputState(State_Base):
             self._update_variable(variable)
             # MODIFIED 5/4/18 END
             combined_values = super()._execute(variable=variable,
+                                               execution_id=execution_id,
                                                runtime_params=runtime_params,
                                                context=context
                                                )

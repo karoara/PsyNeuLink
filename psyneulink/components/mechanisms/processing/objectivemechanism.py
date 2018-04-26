@@ -321,6 +321,7 @@ Class Reference
 
 """
 import warnings
+
 from collections import Iterable
 
 import typecheck as tc
@@ -538,7 +539,7 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
     # ClassDefaults.variable = None;  Must be specified using either **input_states** or **monitored_output_states**
     # kmantel: above needs to be clarified - can ClassDefaults.variable truly be anything? or should there be some format?
     #   if the latter, we should specify one such valid assignment here, and override _validate_default_variable accordingly
-    class ClassDefaults(ProcessingMechanism_Base.ClassDefaults):
+    class Params(ProcessingMechanism_Base.Params):
         function = LinearCombination
 
     # ObjectiveMechanism parameter and control signal assignments):

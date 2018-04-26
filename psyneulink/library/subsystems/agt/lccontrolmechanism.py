@@ -861,6 +861,7 @@ class LCControlMechanism(ControlMechanism):
     def _execute(
         self,
         variable=None,
+        execution_id=None,
         runtime_params=None,
         context=None
     ):
@@ -869,6 +870,7 @@ class LCControlMechanism(ControlMechanism):
         # IMPLEMENTATION NOTE:  skip ControlMechanism._execute since it is a stub method that returns input_values
         output_values = super(ControlMechanism, self)._execute(
             variable=variable,
+            execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )

@@ -818,7 +818,7 @@ class ParameterState(State_Base):
         """Return parameter variable (since ParameterState's function never changes the form of its variable"""
         return variable
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
         """Call self.function with current parameter value as the variable
 
         Get backingfield ("base") value of param of function of Mechanism to which the ParameterState belongs.
@@ -826,7 +826,7 @@ class ParameterState(State_Base):
         """
 
         if variable is not None:
-            return super()._execute(variable, runtime_params=runtime_params, context=context)
+            return super()._execute(variable, execution_id=execution_id, runtime_params=runtime_params, context=context)
         else:
             # Most commonly, ParameterState is for the parameter of a function
             try:
@@ -840,6 +840,7 @@ class ParameterState(State_Base):
 
             return super()._execute(
                 variable=variable,
+                execution_id=execution_id,
                 runtime_params=runtime_params,
                 context=context
             )

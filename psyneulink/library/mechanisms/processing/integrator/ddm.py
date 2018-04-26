@@ -335,7 +335,7 @@ from collections import Iterable
 import numpy as np
 import typecheck as tc
 
-from psyneulink.components.component import method_type
+from psyneulink.components.component import Param, method_type
 from psyneulink.components.functions.function import BogaczEtAl, DriftDiffusionIntegrator, Integrator, NF_Results, NavarroAndFuss, Reduce, STARTING_POINT, THRESHOLD
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import _is_control_spec
 from psyneulink.components.mechanisms.mechanism import Mechanism_Base
@@ -703,7 +703,7 @@ class DDM(ProcessingMechanism_Base):
         kwPreferenceSetName: 'DDMCustomClassPreferences',
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
 
-    class ClassDefaults(ProcessingMechanism_Base.ClassDefaults):
+    class Params(ProcessingMechanism_Base.Params):
         function = BogaczEtAl(
             drift_rate=1.0,
             starting_point=0.0,
@@ -712,6 +712,7 @@ class DDM(ProcessingMechanism_Base):
             t0=.200,
             owner=CLASS_DEFAULTS
         )
+        initializer = np.array([[0]])
 
     paramClassDefaults = Mechanism_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -982,6 +983,7 @@ class DDM(ProcessingMechanism_Base):
     def _execute(
         self,
         variable=None,
+        execution_id=None,
         runtime_params=None,
         context=None
     ):
@@ -1028,7 +1030,7 @@ class DDM(ProcessingMechanism_Base):
         # EXECUTE INTEGRATOR SOLUTION (TIME_STEP TIME SCALE) -----------------------------------------------------
         if isinstance(self.function.__self__, Integrator):
 
-            result = super()._execute(variable, context=context)
+            result = super()._execute(variable, execution_id=execution_id, context=context)
 
             if self.context.initialization_status != ContextFlags.INITIALIZING:
                 logger.info('{0} {1} is at {2}'.format(type(self).__name__, self.name, result))
@@ -1041,6 +1043,7 @@ class DDM(ProcessingMechanism_Base):
 
             result = super()._execute(
                 variable=variable,
+                execution_id=execution_id,
                 runtime_params=runtime_params,
                 context=context
             )

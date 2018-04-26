@@ -937,7 +937,7 @@ from inspect import isclass
 import numpy as np
 import typecheck as tc
 
-from psyneulink.components.component import Component, function_type, method_type
+from psyneulink.components.component import Component, Param, function_type, method_type
 from psyneulink.components.functions.function import Linear
 from psyneulink.components.shellclasses import Function, Mechanism, Projection, State
 from psyneulink.components.states.inputstate import InputState, DEFER_VARIABLE_SPEC_TO_MECH_MSG
@@ -1291,8 +1291,8 @@ class Mechanism_Base(Mechanism):
     className = componentCategory
     suffix = " " + className
 
-    class ClassDefaults(Mechanism.ClassDefaults):
-        variable = np.array([[0]])
+    class Params(Mechanism.Params):
+        variable = Param(np.array([[0]]), read_only=True)
         function = Linear
 
     registry = MechanismRegistry
@@ -1492,8 +1492,7 @@ class Mechanism_Base(Mechanism):
 
         # handle specifying through params dictionary
         try:
-            default_variable_from_input_states, input_states_variable_was_specified = \
-                self._handle_arg_input_states(params[INPUT_STATES])
+            default_variable_from_input_states, input_states_variable_was_specified = self._handle_arg_input_states(params[INPUT_STATES])
         except (TypeError, KeyError):
             pass
         except AttributeError as e:
@@ -2099,6 +2098,7 @@ class Mechanism_Base(Mechanism):
 
     def execute(self,
                 input=None,
+                execution_id=None,
                 runtime_params=None,
                 ignore_execution_id = False,
                 context=None):
@@ -2180,6 +2180,7 @@ class Mechanism_Base(Mechanism):
             elif self.initMethod is INIT__EXECUTE__METHOD_ONLY:
                 return_value =  self._execute(
                     variable=self.instance_defaults.variable,
+                    execution_id=execution_id,
                     runtime_params=runtime_params,
                     context=context,
                 )
@@ -2209,6 +2210,7 @@ class Mechanism_Base(Mechanism):
             elif self.initMethod is INIT_FUNCTION_METHOD_ONLY:
                 return_value = super()._execute(
                     variable=self.instance_defaults.variable,
+                    execution_id=execution_id,
                     runtime_params=runtime_params,
                     context=context,
                 )
@@ -2248,6 +2250,7 @@ class Mechanism_Base(Mechanism):
         #                      to avoid multiple calls to (and potential log entries for) self.value property
         value = self._execute(
             variable=variable,
+            execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )
@@ -2279,7 +2282,7 @@ class Mechanism_Base(Mechanism):
         self.value = value
 
         # UPDATE OUTPUT STATE(S)
-        self._update_output_states(runtime_params=runtime_params, context=context)
+        self._update_output_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
         # REPORT EXECUTION
         if self.prefs.reportOutputPref and (self.context.execution_phase &
@@ -2399,12 +2402,12 @@ class Mechanism_Base(Mechanism):
             if state.name in self.function_params:
                 self.function_params.__additem__(state.name, state.value)
 
-    def _update_output_states(self, runtime_params=None, context=None):
+    def _update_output_states(self, execution_id=None, runtime_params=None, context=None):
         """Execute function for each OutputState and assign result of each to corresponding item of self.output_values
 
         """
         for state in self.output_states:
-            state.update(params=runtime_params, context=context)
+            state.update(execution_id=execution_id, params=runtime_params, context=context)
 
     def initialize(self, value):
         """Assign an initial value to the Mechanism's `value <Mechanism_Base.value>` attribute and update its

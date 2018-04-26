@@ -310,7 +310,7 @@ class ComparatorMechanism(ObjectiveMechanism):
         kwPreferenceSetName: 'ComparatorCustomClassPreferences',
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
 
-    class ClassDefaults(ObjectiveMechanism.ClassDefaults):
+    class Params(ObjectiveMechanism.Params):
         # By default, ComparatorMechanism compares two 1D np.array input_states
         variable = np.array([[0], [0]])
         function = LinearCombination(weights=[[-1], [1]], owner=CLASS_DEFAULTS)

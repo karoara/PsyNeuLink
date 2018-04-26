@@ -183,7 +183,7 @@ class IntegratorMechanism(ProcessingMechanism_Base):
         kwPreferenceSetName: 'IntegratorMechanismCustomClassPreferences',
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
 
-    class ClassDefaults(ProcessingMechanism_Base.ClassDefaults):
+    class Params(ProcessingMechanism_Base.Params):
         # setting owner to a string to avoid using this exact instance
         # in the future, best to make this a sort of spec that can be used to
         # construct a default instance

@@ -165,6 +165,7 @@ Class Reference
 """
 
 import numbers
+
 from collections import Iterable
 
 import numpy as np
@@ -609,7 +610,7 @@ class RecurrentTransferMechanism(TransferMechanism):
     """
     componentType = RECURRENT_TRANSFER_MECHANISM
 
-    class ClassDefaults(TransferMechanism.ClassDefaults):
+    class Params(TransferMechanism.Params):
         variable = np.array([[0]])
         auto = None
         hetero = None

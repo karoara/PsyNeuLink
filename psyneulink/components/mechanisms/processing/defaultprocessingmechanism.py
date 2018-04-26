@@ -55,7 +55,7 @@ class DefaultProcessingMechanism_Base(Mechanism_Base):
     #     kwPreferenceSetName: 'DefaultProcessingMechanismClassPreferences',
     #     kp<pref>: <setting>...}
 
-    class ClassDefaults(Mechanism_Base.ClassDefaults):
+    class Params(Mechanism_Base.Params):
         variable = np.array([SystemDefaultInputValue])
 
     from psyneulink.components.functions.function import Linear

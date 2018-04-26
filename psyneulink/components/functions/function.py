@@ -602,15 +602,13 @@ class Function_Base(Function):
 
     variableClassDefault_locked = False
 
-    class ClassDefaults(Function.ClassDefaults):
+    class Params(Function.Params):
         variable = np.array([0])
+        function_output_type = None
+        function_output_type_conversion = False
 
     # Note: the following enforce encoding as 1D np.ndarrays (one array per variable)
     variableEncodingDim = 1
-
-    class ClassDefaults(Function.ClassDefaults):
-        function_output_type = None
-        function_output_type_conversion = False
 
     paramClassDefaults = Function.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -929,6 +927,7 @@ class ArgumentTherapy(Function_Base):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -1449,7 +1448,7 @@ class CombinationFunction(Function_Base):
     """
     componentType = COMBINATION_FUNCTION_TYPE
 
-    class ClassDefaults(Function_Base.ClassDefaults):
+    class Params(Function_Base.Params):
         # variable = np.array([0, 0])
         variable = np.array([0])
 
@@ -1691,6 +1690,7 @@ class Reduce(CombinationFunction):  # ------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -2092,6 +2092,7 @@ class LinearCombination(CombinationFunction):  # -------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -2532,6 +2533,7 @@ class CombineMeans(CombinationFunction):  # ------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate and combine means of items in `variable <CombineMean.variable>`.
@@ -2655,7 +2657,7 @@ class PredictionErrorDeltaFunction(CombinationFunction):
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE),
     }
 
-    class ClassDefaults(CombinationFunction.ClassDefaults):
+    class Params(CombinationFunction.Params):
         variable = np.array([[1], [1]])
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
@@ -2758,6 +2760,7 @@ class PredictionErrorDeltaFunction(CombinationFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -2946,7 +2949,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
         kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE),
     }
 
-    class ClassDefaults(TransferFunction.ClassDefaults):
+    class Params(TransferFunction.Params):
         # Params
         slope = 1.0
         intercept = 0.0
@@ -2981,6 +2984,7 @@ class Linear(TransferFunction):  # ---------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3190,6 +3194,7 @@ class Exponential(TransferFunction):  # ----------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3350,6 +3355,7 @@ class Logistic(TransferFunction):  # -------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3542,6 +3548,7 @@ class OneHot(TransferFunction):  # ---------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -3773,6 +3780,7 @@ class SoftMax(NormalizingFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -4322,6 +4330,7 @@ class LinearMatrix(TransferFunction):  # ---------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -4586,10 +4595,11 @@ class Integrator(IntegratorFunction):  # ---------------------------------------
 
     componentName = INTEGRATOR_FUNCTION
 
-    class ClassDefaults(IntegratorFunction.ClassDefaults):
+    class Params(IntegratorFunction.Params):
         noise = 0.0
         rate = 1.0
         previous_value = None
+        initializer = 0
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
@@ -5017,6 +5027,7 @@ class SimpleIntegrator(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -5223,6 +5234,7 @@ class LCAIntegrator(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -5391,7 +5403,7 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
 
     componentName = CONSTANT_INTEGRATOR_FUNCTION
 
-    class ClassDefaults(Integrator.ClassDefaults):
+    class Params(Integrator.Params):
         # Params
         offset = 0.0
         scale = 1.0
@@ -5469,6 +5481,7 @@ class ConstantIntegrator(Integrator):  # ---------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -5754,6 +5767,7 @@ class AdaptiveIntegrator(Integrator):  # ---------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -6000,6 +6014,7 @@ class DriftDiffusionIntegrator(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -6261,6 +6276,7 @@ class OrnsteinUhlenbeckIntegrator(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -6716,12 +6732,12 @@ class FHNIntegrator(Integrator):  # --------------------------------------------
 
     componentName = FHN_INTEGRATOR_FUNCTION
 
-    class ClassDefaults(Integrator.ClassDefaults):
+    class Params(Integrator.Params):
         variable = np.array([1.0])
         initializer = np.array([1.0])
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
-    paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
+    paramClassDefaults.update({INITIALIZER: Params.initializer})
     paramClassDefaults.update({
         NOISE: None,
         RATE: None,
@@ -6990,6 +7006,7 @@ class FHNIntegrator(Integrator):  # --------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -7258,7 +7275,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
 
     componentName = ACCUMULATOR_INTEGRATOR_FUNCTION
 
-    class ClassDefaults(Integrator.ClassDefaults):
+    class Params(Integrator.Params):
         increment = None
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
@@ -7350,6 +7367,7 @@ class AccumulatorIntegrator(Integrator):  # ------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -7545,6 +7563,10 @@ class AGTUtilityIntegrator(Integrator):  # -------------------------------------
     multiplicative_param = RATE
     additive_param = OFFSET
 
+    class Params(Integrator.Params):
+        initial_short_term_utility = 0.0
+        initial_long_term_utility = 0.0
+
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
     # paramClassDefaults.update({INITIALIZER: ClassDefaults.variable})
     paramClassDefaults.update({
@@ -7688,6 +7710,7 @@ class AGTUtilityIntegrator(Integrator):  # -------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -7964,6 +7987,7 @@ class BogaczEtAl(
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -8286,6 +8310,7 @@ class NavarroAndFuss(IntegratorFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """
@@ -8435,6 +8460,7 @@ class NormalDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -8553,6 +8579,7 @@ class UniformToNormalDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
 
@@ -8649,6 +8676,7 @@ class ExponentialDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -8748,6 +8776,7 @@ class UniformDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -8849,6 +8878,7 @@ class GammaDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -8949,6 +8979,7 @@ class WaldDist(DistributionFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         # Validate variable and validate params
@@ -9244,6 +9275,7 @@ COMMENT
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate the stability of `variable <Stability.variable>`.
@@ -9364,7 +9396,7 @@ class Distance(ObjectiveFunction):
 
     componentName = DISTANCE_FUNCTION
 
-    class ClassDefaults(ObjectiveFunction.ClassDefaults):
+    class Params(ObjectiveFunction.Params):
         variable = np.array([[0], [0]])
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
@@ -9425,6 +9457,7 @@ class Distance(ObjectiveFunction):
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate the distance between the two vectors in `variable <Stability.variable>`.
@@ -9554,7 +9587,7 @@ class LearningFunction(Function_Base):
 
     componentType = LEARNING_FUNCTION_TYPE
 
-    class ClassDefaults(Function_Base.ClassDefaults):
+    class Params(Function_Base.Params):
         variable = np.array([0, 0, 0])
 
     # def __init__(self, default_variable, params, owner, prefs, context):
@@ -9682,7 +9715,7 @@ class Hebbian(LearningFunction):  # --------------------------------------------
 
     componentName = HEBBIAN_FUNCTION
 
-    class ClassDefaults(LearningFunction.ClassDefaults):
+    class Params(LearningFunction.Params):
         variable = np.array([0, 0])
 
     default_learning_rate = 0.05
@@ -9738,6 +9771,7 @@ class Hebbian(LearningFunction):  # --------------------------------------------
 
     def function(self,
                  variable=None,
+                 execution_id=None,
                  params=None,
                  context=None):
         """Calculate a matrix of weight changes from a 1d array of activity values using Hebbian learning function.
@@ -9932,7 +9966,7 @@ class Reinforcement(LearningFunction):  # --------------------------------------
 
     componentName = RL_FUNCTION
 
-    class ClassDefaults(LearningFunction.ClassDefaults):
+    class Params(LearningFunction.Params):
         variable = np.array([[0], [0], [0]])
 
     default_learning_rate = 0.05
@@ -10221,7 +10255,7 @@ class BackPropagation(LearningFunction):
 
     componentName = BACKPROPAGATION_FUNCTION
 
-    class ClassDefaults(LearningFunction.ClassDefaults):
+    class Params(LearningFunction.Params):
         variable = np.array([[0], [0], [0]])
 
     default_learning_rate = 1.0

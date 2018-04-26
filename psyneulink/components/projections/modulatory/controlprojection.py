@@ -275,7 +275,7 @@ class ControlProjection(ModulatoryProjection_Base):
         sender=[CONTROL_SIGNAL]
         receiver=[PARAMETER_STATE]
 
-    class ClassDefaults(ModulatoryProjection_Base.ClassDefaults):
+    class Params(ModulatoryProjection_Base.Params):
         function = Linear
 
     paramClassDefaults = Projection_Base.paramClassDefaults.copy()

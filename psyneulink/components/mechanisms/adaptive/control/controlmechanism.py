@@ -306,6 +306,7 @@ import warnings
 import numpy as np
 import typecheck as tc
 
+from psyneulink.components.component import Param
 from psyneulink.components.functions.function import LinearCombination, ModulationParam, _is_modulation_param
 from psyneulink.components.mechanisms.adaptive.adaptivemechanism import AdaptiveMechanism_Base
 from psyneulink.components.mechanisms.mechanism import Mechanism_Base
@@ -314,9 +315,7 @@ from psyneulink.components.states.modulatorysignals.controlsignal import Control
 from psyneulink.components.states.outputstate import SEQUENTIAL
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.defaults import defaultControlAllocation
-from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMMAND_LINE, CONTROL, CONTROL_PROJECTION, \
-    CONTROL_PROJECTIONS, CONTROL_SIGNAL, CONTROL_SIGNALS, EXPONENT, INIT__EXECUTE__METHOD_ONLY, NAME, \
-    OBJECTIVE_MECHANISM, OWNER_VALUE, PRODUCT, PROJECTIONS, PROJECTION_TYPE, SYSTEM, VARIABLE, WEIGHT
+from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMMAND_LINE, CONTROL, CONTROL_PROJECTION, CONTROL_PROJECTIONS, CONTROL_SIGNAL, CONTROL_SIGNALS, EXPONENT, INIT__EXECUTE__METHOD_ONLY, NAME, OBJECTIVE_MECHANISM, OWNER_VALUE, PRODUCT, PROJECTIONS, PROJECTION_TYPE, SYSTEM, VARIABLE, WEIGHT
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import ContentAddressableList
@@ -536,27 +535,10 @@ class ControlMechanism(AdaptiveMechanism_Base):
     #     kwPreferenceSetName: 'ControlMechanismClassPreferences',
     #     kp<pref>: <setting>...}
 
-    class _DefaultsAliases(AdaptiveMechanism_Base._DefaultsAliases):
-        # alias allocation_policy to value for user convenience
-        # NOTE: should not be used internally for consistency
-        @property
-        def allocation_policy(self):
-            return self.value
-
-        @allocation_policy.setter
-        def allocation_policy(self, value):
-            self.value = value
-
-    class _DefaultsMeta(AdaptiveMechanism_Base._DefaultsMeta, _DefaultsAliases):
-        pass
-
-    class ClassDefaults(AdaptiveMechanism_Base.ClassDefaults, metaclass=_DefaultsMeta):
+    class Params(AdaptiveMechanism_Base.Params):
         # This must be a list, as there may be more than one (e.g., one per control_signal)
         variable = np.array(defaultControlAllocation)
-        value = np.array(defaultControlAllocation)
-
-    class InstanceDefaults(AdaptiveMechanism_Base.InstanceDefaults, _DefaultsAliases):
-        pass
+        value = Param(np.array(defaultControlAllocation), aliases='allocation_policy')
 
     paramClassDefaults = Mechanism_Base.paramClassDefaults.copy()
     paramClassDefaults.update({
@@ -903,6 +885,7 @@ class ControlMechanism(AdaptiveMechanism_Base):
     def _execute(
         self,
         variable=None,
+        execution_id=None,
         runtime_params=None,
         context=None
     ):

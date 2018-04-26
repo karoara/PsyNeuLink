@@ -291,12 +291,13 @@ Class Reference
 
 import inspect
 import warnings
+
 from enum import IntEnum
 
 import numpy as np
 import typecheck as tc
 
-from psyneulink.components.component import function_type, method_type
+from psyneulink.components.component import Param, function_type, method_type
 # import Components
 # FIX: EVCControlMechanism IS IMPORTED HERE TO DEAL WITH COST FUNCTIONS THAT ARE DEFINED IN EVCControlMechanism
 #            SHOULD THEY BE LIMITED TO EVC??
@@ -615,26 +616,9 @@ class ControlSignal(ModulatorySignal):
     componentType = CONTROL_SIGNAL
     paramsType = OUTPUT_STATE_PARAMS
 
-    class _DefaultsAliases(ModulatorySignal._DefaultsAliases):
-        # alias allocation to variable for user convenience
-        # NOTE: should not be used internally for consistency
-        @property
-        def allocation(self):
-            return self.variable
-
-        @allocation.setter
-        def allocation(self, value):
-            self.variable = value
-
-    class _DefaultsMeta(ModulatorySignal._DefaultsMeta, _DefaultsAliases):
-        pass
-
-    class ClassDefaults(ModulatorySignal.ClassDefaults, metaclass=_DefaultsMeta):
-        variable = defaultControlAllocation
+    class Params(ModulatorySignal.Params):
+        variable = Param(defaultControlAllocation, aliases='allocation')
         allocation_samples = np.arange(0.1, 1.01, 0.3)
-
-    class InstanceDefaults(ModulatorySignal.InstanceDefaults, _DefaultsAliases):
-        pass
 
     stateAttributes = ModulatorySignal.stateAttributes | {ALLOCATION_SAMPLES}
 
@@ -673,7 +657,7 @@ class ControlSignal(ModulatorySignal):
                  adjustment_cost_function:tc.optional(is_function_type)=Linear,
                  duration_cost_function:tc.optional(is_function_type)=SimpleIntegrator,
                  cost_combination_function:tc.optional(is_function_type)=Reduce(operation=SUM),
-                 allocation_samples=ClassDefaults.allocation_samples,
+                 allocation_samples=Params.allocation_samples,
                  modulation:tc.optional(_is_modulation_param)=None,
                  projections=None,
                  params=None,
@@ -946,12 +930,12 @@ class ControlSignal(ModulatorySignal):
 
         return state_spec, params_dict
 
-    def update(self, params=None, context=None):
-        super().update(params=params, context=context)
+    def update(self, execution_id=None, params=None, context=None):
+        super().update(execution_id=execution_id, params=params, context=context)
         self._compute_costs()
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
-        return float(super()._execute(variable=variable, runtime_params=runtime_params, context=context))
+    def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
+        return float(super()._execute(variable=variable, execution_id=execution_id, runtime_params=runtime_params, context=context))
 
     def _compute_costs(self):
         """Compute costs based on self.value."""

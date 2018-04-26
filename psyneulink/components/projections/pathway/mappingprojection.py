@@ -437,7 +437,7 @@ class MappingProjection(PathwayProjection_Base):
     className = componentType
     suffix = " " + className
 
-    class ClassDefaults(PathwayProjection_Base.ClassDefaults):
+    class Params(PathwayProjection_Base.Params):
         function = LinearMatrix
         matrix = DEFAULT_MATRIX
 
@@ -618,7 +618,7 @@ class MappingProjection(PathwayProjection_Base):
 
         super()._instantiate_receiver(context=context)
 
-    def _execute(self, variable=None, runtime_params=None, context=None):
+    def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
         """
         If there is a functionParameterStates[LEARNING_PROJECTION], update the matrix ParameterState:
 
@@ -639,6 +639,7 @@ class MappingProjection(PathwayProjection_Base):
 
         return super()._execute(
             variable=variable,
+            execution_id=execution_id,
             runtime_params=runtime_params,
             context=context
         )

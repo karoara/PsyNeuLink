@@ -262,7 +262,7 @@ class GatingProjection(ModulatoryProjection_Base):
         sender=[GATING_SIGNAL]
         receiver=[INPUT_STATE, OUTPUT_STATE]
 
-    class ClassDefaults(ModulatoryProjection_Base.ClassDefaults):
+    class Params(ModulatoryProjection_Base.Params):
         function = Linear(params={FUNCTION_OUTPUT_TYPE:FunctionOutputType.RAW_NUMBER})
 
     paramClassDefaults = Projection_Base.paramClassDefaults.copy()

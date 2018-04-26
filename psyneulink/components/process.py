@@ -813,7 +813,7 @@ class Process(Process_Base):
     #     kpReportOutputPref: PreferenceEntry(False, PreferenceLevel.INSTANCE)}
     # Use inputValueSystemDefault as default input to process
 
-    class ClassDefaults(Process_Base.ClassDefaults):
+    class Params(Process_Base.Params):
         variable = None
 
     paramClassDefaults = Component.paramClassDefaults.copy()

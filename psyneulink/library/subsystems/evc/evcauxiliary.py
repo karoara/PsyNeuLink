@@ -59,7 +59,7 @@ class EVCAuxiliaryFunction(Function_Base):
     """
     componentType = kwEVCAuxFunctionType
 
-    class ClassDefaults(Function_Base.ClassDefaults):
+    class Params(Function_Base.Params):
         variable = None
 
     paramClassDefaults = Function_Base.paramClassDefaults.copy()
@@ -132,6 +132,7 @@ class ValueFunction(EVCAuxiliaryFunction):
         outcome=None,
         costs=None,
         variable=None,
+        execution_id=None,
         params=None,
         context=None
     ):
@@ -185,15 +186,15 @@ class ValueFunction(EVCAuxiliaryFunction):
 
         # Aggregate costs
         if isinstance(cost_function, UserDefinedFunction):
-            cost = cost_function._execute(controller=controller, costs=costs)
+            cost = cost_function._execute(controller=controller, costs=costs, execution_id=execution_id)
         else:
-            cost = cost_function._execute(variable=costs, context=context)
+            cost = cost_function._execute(variable=costs, execution_id=execution_id, context=context)
 
         # Combine outcome and cost to determine value
         if isinstance(combine_function, UserDefinedFunction):
-            value = combine_function._execute(controller=controller, outcome=outcome, cost=cost)
+            value = combine_function._execute(controller=controller, outcome=outcome, cost=cost, execution_id=execution_id)
         else:
-            value = combine_function._execute(variable=[outcome, -cost])
+            value = combine_function._execute(variable=[outcome, -cost], execution_id=execution_id)
 
         return (value, outcome, cost)
 
@@ -266,6 +267,7 @@ class ControlSignalGridSearch(EVCAuxiliaryFunction):
         self,
         controller=None,
         variable=None,
+        execution_id=None,
         runtime_params=None,
         params=None,
         context=None,

@@ -732,6 +732,7 @@ Class Reference
 import inspect
 import numbers
 import warnings
+
 from collections import Iterable
 
 import numpy as np
@@ -742,14 +743,7 @@ from psyneulink.components.functions.function import CombinationFunction, Functi
     ModulationParam, _get_modulated_param, get_param_value_for_keyword
 from psyneulink.components.shellclasses import Mechanism, Process_Base, Projection, State
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMMAND_LINE, CONTEXT, CONTROL_PROJECTION_PARAMS, \
-    CONTROL_SIGNAL_SPECS, DEFERRED_INITIALIZATION, EXPONENT, FUNCTION, FUNCTION_PARAMS, \
-    GATING_PROJECTION_PARAMS, GATING_SIGNAL_SPECS, INITIALIZING, INPUT_STATES, LEARNING_PROJECTION_PARAMS, \
-    LEARNING_SIGNAL_SPECS, MAPPING_PROJECTION_PARAMS, MATRIX, MECHANISM, MODULATORY_PROJECTIONS, MODULATORY_SIGNAL, \
-    NAME, OUTPUT_STATES, OWNER, PARAMETER_STATES, PARAMS, PATHWAY_PROJECTIONS, PREFS_ARG, PROJECTIONS, \
-    PROJECTION_PARAMS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, REFERENCE_VALUE_NAME, SENDER, \
-    STANDARD_OUTPUT_STATES, STATE, STATE_CONTEXT, STATE_NAME, STATE_PARAMS, STATE_PREFS, STATE_TYPE, STATE_VALUE, \
-    VALUE, VARIABLE, WEIGHT, kwStateComponentCategory
+from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMMAND_LINE, CONTEXT, CONTROL_PROJECTION_PARAMS, CONTROL_SIGNAL_SPECS, DEFERRED_INITIALIZATION, EXPONENT, FUNCTION, FUNCTION_PARAMS, GATING_PROJECTION_PARAMS, GATING_SIGNAL_SPECS, INITIALIZING, INPUT_STATES, LEARNING_PROJECTION_PARAMS, LEARNING_SIGNAL_SPECS, MAPPING_PROJECTION_PARAMS, MATRIX, MECHANISM, MODULATORY_PROJECTIONS, MODULATORY_SIGNAL, NAME, OUTPUT_STATES, OWNER, PARAMETER_STATES, PARAMS, PATHWAY_PROJECTIONS, PREFS_ARG, PROJECTIONS, PROJECTION_PARAMS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, REFERENCE_VALUE_NAME, SENDER, STANDARD_OUTPUT_STATES, STATE, STATE_CONTEXT, STATE_NAME, STATE_PARAMS, STATE_PREFS, STATE_TYPE, STATE_VALUE, VALUE, VARIABLE, WEIGHT, kwStateComponentCategory
 from psyneulink.globals.preferences.componentpreferenceset import kpVerbosePref
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category
@@ -1000,7 +994,7 @@ class State_Base(State):
     suffix = " " + className
     paramsType = None
 
-    class ClassDefaults(State.ClassDefaults):
+    class Params(State.Params):
         function = Linear
 
     stateAttributes = {FUNCTION, FUNCTION_PARAMS, PROJECTIONS}
@@ -1856,7 +1850,7 @@ class State_Base(State):
         raise StateError("PROGRAM ERROR: {} does not implement _parse_state_specific_specs method".
                          format(self.__class__.__name__))
 
-    def update(self, params=None, context=None):
+    def update(self, execution_id=None, params=None, context=None):
         """Update each projection, combine them, and assign return result
 
         Call update for each projection in self.path_afferents (passing specified params)
@@ -2046,7 +2040,7 @@ class State_Base(State):
         except (KeyError, TypeError):
             function_params = None
 
-        self.value = self.execute(runtime_params=function_params, context=context)
+        self.value = self.execute(execution_id=execution_id, runtime_params=function_params, context=context)
 
     def _get_value_label(self, labels_dict, all_states):
         subdicts = False
@@ -2908,6 +2902,9 @@ def _parse_state_spec(state_type=None,
     # FIX: JDC 2/21/18 PROBLEM IS THAT, IF IT IS AN InputState, THEN EITHER update MUST BE CALLED
     # FIX:    OR VARIABLE MUST BE WRAPPED IN A LIST, ELSE LINEAR COMB MAY TREAT A 2D ARRAY
     # FIX:    AS TWO ITEMS TO BE COMBINED RATHER THAN AS A 2D ARRAY
+    # KDM 6/7/18: below this can end up assigning to the state a variable of the same shape as a default function
+    #   (because when calling the function, _check_args is called and if given None, will fall back to instance or
+    #   class defaults)
     try:
         spec_function = state_dict[PARAMS][FUNCTION]
         # if isinstance(spec_function, Function):

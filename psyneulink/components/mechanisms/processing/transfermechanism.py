@@ -301,6 +301,7 @@ Class Reference
 """
 import inspect
 import numbers
+
 from collections import Iterable
 
 import numpy as np
@@ -677,6 +678,11 @@ class TransferMechanism(ProcessingMechanism_Base):
 
     standard_output_states = standard_output_states.copy()
 
+    class Params(ProcessingMechanism_Base.Params):
+        initial_value = None
+        clip = None
+        noise = 0.0
+
     @tc.typecheck
     def __init__(self,
                  default_variable=None,
@@ -949,9 +955,11 @@ class TransferMechanism(ProcessingMechanism_Base):
         return current_input
 
     def _execute(self,
-                 variable=None,
-                 runtime_params=None,
-                 context=None):
+        variable=None,
+        execution_id=None,
+        runtime_params=None,
+        context=None
+    ):
         """Execute TransferMechanism function and return transform of input
 
         Execute TransferMechanism function on input, and assign to output_values:
@@ -1021,6 +1029,7 @@ class TransferMechanism(ProcessingMechanism_Base):
             for elem in current_input:
                 output_item = super(Mechanism, self)._execute(
                     variable=elem,
+                    execution_id=execution_id,
                     runtime_params=runtime_params,
                     context=context
                 )
@@ -1030,6 +1039,7 @@ class TransferMechanism(ProcessingMechanism_Base):
         else:
             outputs = super(Mechanism, self)._execute(
                 variable=current_input,
+                execution_id=execution_id,
                 runtime_params=runtime_params,
                 context=context
             )
