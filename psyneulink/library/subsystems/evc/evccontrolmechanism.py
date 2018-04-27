@@ -704,6 +704,7 @@ class EVCControlMechanism(ControlMechanism):
                  combine_outcome_and_cost_function=LinearCombination(operation=SUM,
                                                                      context=componentType+FUNCTION),
                  save_all_values_and_policies:bool=False,
+                 prediction_learning=False,
                  params=None,
                  name=None,
                  prefs:is_pref_set=None,
@@ -722,7 +723,7 @@ class EVCControlMechanism(ControlMechanism):
                                                   combine_outcome_and_cost_function=combine_outcome_and_cost_function,
                                                   save_all_values_and_policies=save_all_values_and_policies,
                                                   params=params)
-
+        self.prediction_learning = prediction_learning
         super(EVCControlMechanism, self).__init__(# default_variable=default_variable,
                                            # size=size,
                                            system=system,
@@ -793,7 +794,7 @@ class EVCControlMechanism(ControlMechanism):
                 variable.append(origin_mech.input_states[state_name].instance_defaults.variable)
 
             prediction_input_mechanism = TransferMechanism(name=origin_mech.name + " INPUT " + PREDICTION_MECHANISM,
-                                                           default_variable=variable,
+                                                           default_variable=np.array([[1.0]]),
                                                            input_states=state_names,
                                                            params=prediction_mechanism_params,
                                                            context=context)
@@ -812,14 +813,14 @@ class EVCControlMechanism(ControlMechanism):
 
             prediction_mechanism._role = CONTROL
             prediction_mechanism.origin_mech = origin_mech
-
-            # Assign projections to prediction_mechanism that duplicate those received by origin_mech
-            #    (this includes those from ProcessInputState, SystemInputState and/or recurrent ones
-            for orig_input_state, prediction_input_input_state in zip(origin_mech.input_states,
-                                                            prediction_input_mechanism.input_states):
-                for projection in orig_input_state.path_afferents:
-                    MappingProjection(sender=projection.sender,
-                                      receiver=prediction_input_input_state)
+            if not self.prediction_learning:
+                # Assign projections to prediction_mechanism that duplicate those received by origin_mech
+                #    (this includes those from ProcessInputState, SystemInputState and/or recurrent ones
+                for orig_input_state, prediction_input_input_state in zip(origin_mech.input_states,
+                                                                prediction_input_mechanism.input_states):
+                    for projection in orig_input_state.path_afferents:
+                        MappingProjection(sender=projection.sender,
+                                          receiver=prediction_input_input_state)
 
             MappingProjection(sender=prediction_input_mechanism,
                               receiver=prediction_mechanism)
@@ -850,6 +851,7 @@ class EVCControlMechanism(ControlMechanism):
         self.predicted_input = {}
         for i, origin_mech in zip(range(len(system.origin_mechanisms)), system.origin_mechanisms):
             self.predicted_input[origin_mech] = system.processes[i].origin_mechanisms[0].instance_defaults.variable
+
 
     def _instantiate_attributes_after_function(self, context=None):
 
