@@ -2220,10 +2220,15 @@ class Mechanism_Base(Mechanism):
         if (input is None
             and (self.context.execution_phase & (ContextFlags.PROCESSING|ContextFlags.LEARNING|ContextFlags.SIMULATION))
             and (self.input_state.path_afferents != [])):
-
             variable = self._update_variable(self._update_input_states(runtime_params=runtime_params,
                                                                        context=context))
-
+            if variable is None:
+                input = self.instance_defaults.variable
+                variable = self._update_variable(self._get_variable_from_input(input))
+            elif isinstance(variable, (list, np.ndarray)):
+                if None in variable:
+                    input = self.instance_defaults.variable
+                    variable = self._update_variable(self._get_variable_from_input(input))
         # Direct call to execute Mechanism with specified input, so assign input to Mechanism's input_states
         else:
             if context is COMMAND_LINE: # cxt-test
