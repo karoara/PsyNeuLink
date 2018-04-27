@@ -1314,7 +1314,8 @@ class TestGrattonWithRL:
                                      TargetAutomaticProcess,
                                      FlankerAutomaticProcess,
                                      RewardProcess],
-                          controller=EVCControlMechanism(prefs={LOG_PREF: PreferenceEntry(LogCondition.INITIALIZATION,
+                          controller=EVCControlMechanism(prediction_learning=True,
+                                                         prefs={LOG_PREF: PreferenceEntry(LogCondition.INITIALIZATION,
                                                                                           PreferenceLevel.INSTANCE)}),
                           enable_controller=True,
                           monitor_for_control=[Reward,
@@ -1341,7 +1342,7 @@ class TestGrattonWithRL:
                          Reward: reward,
                          Target_Stim: targetFeatures}
 
-        target_dict = {mySystem.controller.prediction_mechanisms[0]: [1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0],
+        target_dict = {mySystem.controller.prediction_mechanisms[0]: flankerFeatures,
                        mySystem.controller.prediction_mechanisms[1]: reward,
                        mySystem.controller.prediction_mechanisms[2]: targetFeatures}
 
