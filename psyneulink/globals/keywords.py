@@ -523,6 +523,7 @@ LEABRA_MECHANISM = "LeabraMechanism"
 RECURRENT_TRANSFER_MECHANISM = "RecurrentTransferMechanism"
 LCA = "LCA"
 KWTA = "KWTA"
+CONTRASTIVE_HEBBIAN_MECHANISM = 'ContrastiveHebbianMechanism'
 INTEGRATOR_MECHANISM = "IntegratorMechanism"
 DDM_MECHANISM = "DDM"
 COMPOSITION_INTERFACE_MECHANISM = "CompositionInterfaceMechanism"
