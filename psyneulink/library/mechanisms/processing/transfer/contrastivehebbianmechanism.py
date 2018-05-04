@@ -670,13 +670,6 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                          name=name,
                          prefs=prefs)
 
-    def _validate_params(self, request_set, target_set=None, context=None):
-        """Validate shape and size of auto, hetero, matrix.
-        """
-        from psyneulink.library.projections.pathway.autoassociativeprojection import AutoAssociativeProjection
-
-        super()._validate_params(request_set=request_set, target_set=target_set, context=context)
-
     def _instantiate_attributes_before_function(self, function=None, context=None):
 
         super()._instantiate_attributes_before_function(function=function, context=context)
