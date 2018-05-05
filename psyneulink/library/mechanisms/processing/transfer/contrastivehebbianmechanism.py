@@ -175,8 +175,8 @@ from psyneulink.components.projections.modulatory.learningprojection import Lear
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.states.outputstate import PRIMARY, StandardOutputStates
 from psyneulink.globals.keywords import \
-    ENERGY, ENTROPY, HETERO, HOLLOW_MATRIX, MATRIX, MEAN, MEDIAN, NAME, \
-    CONTRASTIVE_HEBBIAN_MECHANISM, RESULT, STANDARD_DEVIATION, VARIABLE, VARIANCE
+    ENERGY, ENTROPY, HOLLOW_MATRIX, MATRIX, MEAN, MEDIAN, NAME, CONTRASTIVE_HEBBIAN_MECHANISM, \
+    RESULT, STANDARD_DEVIATION, VARIABLE, VARIANCE
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.utilities import is_numeric_or_none, parameter_spec
@@ -470,10 +470,11 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         COMMENT
 
     integrator_function:
-        When *integrator_mode* is set to True, the ContrastiveHebbianMechanism executes its `integrator_function <ContrastiveHebbianMechanism.integrator_function>`,
-        which is the `AdaptiveIntegrator`. See `AdaptiveIntegrator <AdaptiveIntegrator>` for more details on what it computes.
-        Keep in mind that the `smoothing_factor <ContrastiveHebbianMechanism.smoothing_factor>` parameter of the `ContrastiveHebbianMechanism` corresponds to the
-        `rate <ContrastiveHebbianMechanismIntegrator.rate>` of the `ContrastiveHebbianMechanismIntegrator`.
+        When *integrator_mode* is set to True, the ContrastiveHebbianMechanism executes its `integrator_function
+        <ContrastiveHebbianMechanism.integrator_function>`, which is the `AdaptiveIntegrator`. See `AdaptiveIntegrator
+        <AdaptiveIntegrator>` for more details on what it computes. Keep in mind that the `smoothing_factor
+        <ContrastiveHebbianMechanism.smoothing_factor>` parameter of the `ContrastiveHebbianMechanism` corresponds to
+        the `rate <ContrastiveHebbianMechanismIntegrator.rate>` of the `ContrastiveHebbianMechanismIntegrator`.
 
     integrator_mode:
         **When integrator_mode is set to True:**
@@ -483,14 +484,15 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         .. math::
             value = previous\\_value(1-smoothing\\_factor) + variable \\cdot smoothing\\_factor + noise
 
-        The result of the integrator function above is then passed into the `mechanism's function <ContrastiveHebbianMechanism.function>`. Note that
-        on the first execution, *initial_value* sets previous_value.
+        The result of the integrator function above is then passed into the `mechanism's function
+        <ContrastiveHebbianMechanism.function>`. Note that on the first execution, *initial_value* sets previous_value.
 
         **When integrator_mode is set to False:**
 
-        The variable of the mechanism is passed into the `function of the mechanism <ContrastiveHebbianMechanism.function>`. The mechanism's
-        `integrator_function <ContrastiveHebbianMechanism.integrator_function>` is skipped entirely, and all related arguments (*noise*, *leak*,
-        *initial_value*, and *time_step_size*) are ignored.
+        The variable of the mechanism is passed into the `function of the Mechanism
+        <ContrastiveHebbianMechanism.function>`. The Mechanism's `integrator_function
+        <ContrastiveHebbianMechanism.integrator_function>` is skipped entirely, and all
+        related arguments (*noise*, *leak*, *initial_value*, and *time_step_size*) are ignored.
 
     noise : float or function : default 0.0
         When `integrator_mode <ContrastiveHebbianMechanism.integrator_mode>` is set to True, noise is passed into the
@@ -500,15 +502,15 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         If noise is a list or array, it must be the same length as `variable
         <ContrastiveHebbianMechanism.default_variable>`.
 
-        If noise is specified as a single float or function, while `variable <ContrastiveHebbianMechanism.variable>` is a
-        list or array, noise will be applied to each variable element. In the case of a noise function, this means that
-        the function will be executed separately for each variable element.
+        If noise is specified as a single float or function, while `variable <ContrastiveHebbianMechanism.variable>`
+        is a list or array, noise will be applied to each variable element. In the case of a noise function, this means
+        that the function will be executed separately for each variable element.
 
         .. note::
             In order to generate random noise, we recommend selecting a probability distribution function
-            (see `Distribution Functions <DistributionFunction>` for details), which will generate a new noise value from
-            its distribution on each execution. If noise is specified as a float or as a function with a fixed output, then
-            the noise will simply be an offset that remains the same across all executions.
+            (see `Distribution Functions <DistributionFunction>` for details), which will generate a new noise value
+            from its distribution on each execution. If noise is specified as a float or as a function with a fixed
+            output, then the noise will simply be an offset that remains the same across all executions.
 
     smoothing_factor : float : default 0.5
         the smoothing factor for exponential time averaging of input when `integrator_mode
@@ -520,8 +522,8 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         specifies the allowable range for the result of `function <ContrastiveHebbianMechanism.function>`
 
         the item in index 0 specifies the minimum allowable value of the result, and the item in index 1 specifies the
-        maximum allowable value; any element of the result that exceeds the specified minimum or maximum value is set to
-         the value of `clip <ContrastiveHebbianMechanism.clip>` that it exceeds.
+        maximum allowable value; any element of the result that exceeds the specified minimum or maximum value is set
+        to the value of `clip <ContrastiveHebbianMechanism.clip>` that it exceeds.
 
     previous_input : 1d np.array of floats
         the value of the input on the previous execution, including the value of `recurrent_projection`.
@@ -565,15 +567,20 @@ class ContrastiveHebbianMechanism(TransferMechanism):
     output_states : Dict[str: OutputState]
         an OrderedDict with the following `OutputStates <OutputState>`:
 
-        * `TRANSFER_RESULT`, the :keyword:`value` of which is the **result** of `function <ContrastiveHebbianMechanism.function>`;
-        * `TRANSFER_MEAN`, the :keyword:`value` of which is the mean of the result;
-        * `TRANSFER_VARIANCE`, the :keyword:`value` of which is the variance of the result;
-        * `ENERGY`, the :keyword:`value` of which is the energy of the result,
+        * `TRANSFER_RESULT`, the `value <OutputState.value>` of which is the **result** of `function
+        <ContrastiveHebbianMechanism.function>`;
+        * `TRANSFER_MEAN`, the `value <OutputState.value>` of which is the mean of the result;
+        * `TRANSFER_VARIANCE`, the `value <OutputState.value>` of which is the variance of the result;
+        * `ENERGY`, the `value <OutputState.value>` of which is the energy of the result,
           calculated using the `Stability` Function with the ENERGY metric;
-        * `ENTROPY`, the :keyword:`value` of which is the entropy of the result,
+        * `ENTROPY`, the `value <OutputState.value>` of which is the entropy of the result,
           calculated using the `Stability` Function with the ENTROPY metric;
-          note:  this is only present if the Mechanism's :keyword:`function` is bounded between 0 and 1
+          note:  this is only present if the Mechanism's `function <Mechanism_Base.function>` is bounded between 0 and 1
           (e.g., the `Logistic` function).
+        * 'PLUS_PHASE_ACTIVITY', the `value <OutputState.value>` of which is the activity at the end of the plus
+          phase of training.
+        * 'MINUS_PHASE_ACTIVITY', the `value <OutputState.value>` of which is the activity at the end of the minus
+          phase of training.
 
     output_values : List[array(float64), float, float]
         a list with the following items:
@@ -583,6 +590,8 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         * **variance** of the result (``value`` of TRANSFER_VARIANCE OutputState);
         * **energy** of the result (``value`` of ENERGY OutputState);
         * **entropy** of the result (if the ENTROPY OutputState is present).
+        * **plus_phase_activity** at the end of a training trial.
+        * **minus_phase_activity** at the end of a training trial.
 
     name : str
         the name of the ContrastiveHebbianMechanism; if it is not specified in the **name** argument of the constructor,
@@ -592,7 +601,6 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         the `PreferenceSet` for the ContrastiveHebbianMechanism; if it is not specified in the **prefs** argument of the
         constructor, a default is assigned using `classPreferences` defined in __init__.py (see :doc:`PreferenceSet
         <LINK>` for details).
-
 
     Returns
     -------
