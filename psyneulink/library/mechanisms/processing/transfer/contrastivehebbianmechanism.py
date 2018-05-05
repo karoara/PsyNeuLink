@@ -746,8 +746,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         else:
             current_activity = internal_input
 
-        value = super()._execute(self,
-                                 variable=variable,
+        value = super()._execute(variable=variable,
                                  function_variable=current_activity,
                                  runtime_params=runtime_params,
                                  context=context)
