@@ -165,6 +165,7 @@ from collections import Iterable
 
 import numpy as np
 import typecheck as tc
+from enum import IntEnum
 
 from psyneulink.components.functions.function import ContrastiveHebbian, Linear, is_function_type
 from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import \
@@ -190,6 +191,12 @@ __all__ = [
 
 PLUS_PHASE_ACTIVITY = 'plus_phase_activity'
 MINUS_PHASE_ACTIVITY = 'minus_phase_activity'
+
+
+class LearningPhase(IntEnum):
+    MINUS = 1
+    PLUS  = 0
+
 
 class RecurrentTransferError(Exception):
     def __init__(self, error_value):
@@ -625,7 +632,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                  enable_learning:bool=False,
                  learning_rate:tc.optional(tc.any(parameter_spec, bool))=None,
                  learning_function: tc.any(is_function_type) = ContrastiveHebbian,
-                 convergence_criterion =??DEFAULT VALUE or None??,
+                 convergence_criterion=??DEFAULT VALUE or None??,
                  output_states:tc.optional(tc.any(str, Iterable))=RESULT,
                  params=None,
                  name=None,
@@ -677,6 +684,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         self.minus_phase_activity = None
         self.attributes_dict.update({PLUS_PHASE_ACTIVITY:self.plus_phase_activity,
                                      MINUS_PHASE_ACTIVITY:self.minus_phase_activity})
+        self.learning_phase = None
 
     # IMPLEMENTATION NOTE: THIS SHOULD BE MOVED TO COMPOSITION WHEN THAT IS IMPLEMENTED
     def _instantiate_learning_mechanism(self,
@@ -718,3 +726,35 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                            name="{} for {}".format(LearningProjection.className, self.recurrent_projection.name))
 
         return learning_mechanism
+
+    def _execute(self,
+                 variable=None,
+                 function_variable=None,
+                 runtime_params=None,
+                 context=None):
+
+        external_input = self.input_state.variable[0]
+        internal_input =  self.input_state.variable[1]
+
+        if self.learning_phase is None:
+            self.learning_phase = LearningPhase.PLUS
+
+        if self.learning_phase == LearningPhase.PLUS:
+            current_activity = external_input + internal_input
+            initial_internal_activity = internal_input
+
+        value = super()._execute(self,
+                                 variable=variable,
+                                 function_variable=current_activity,
+                                 runtime_params=runtime_params,
+                                 context=context)
+
+        if self.delta < self.convergence_criterion:
+            if self.learning_phase == LearningPhase.MINUS:
+                self.is_finished = True
+            # Initialize internal input
+            self.input_state.variable[1] = self.input_state.socket
+            # Switch learning phase
+            self.learning_phase = ~self.learning_phase
+
+        return value
