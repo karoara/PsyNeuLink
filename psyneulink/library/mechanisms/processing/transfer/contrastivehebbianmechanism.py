@@ -123,6 +123,10 @@ In all other respects the Mechanism is identical to a standard  `TransferMechani
 Execution
 ---------
 
+COMMENT:
+  NOTE THAT IT IS ALWAYS RUN IN INTEGRATOR_MODE = TRUE
+COMMENT
+
 When a ContrastiveHebbianMechanism executes, its variable, as is the case with all mechanisms, is determined by the
 projections the mechanism receives. This means that a ContrastiveHebbianMechanism's variable is determined in part by the
 value of its own `primary OutputState <OutputState_Primary>` on the previous execution, and the `matrix` of the
@@ -243,6 +247,12 @@ class CONTRASTIVE_HEBBIAN_OUTPUT():
             Function <Function.Stability.function>` with the ENTROPY metric
             (Note: this is only present if the Mechanism's `function` is bounded
             between 0 and 1 (e.g. the `Logistic` Function)).
+
+        *PLUS_PHASE_ACTIVITY* : 1d np.array
+            The vector of activity at the end of the plus phase of a training trial.
+
+        *MINUS_PHASE_ACTIVITY* : 1d np.array
+            The vector of activity at the end of the minus phase of a training trial.
         """
     RESULT=RESULT
     MEAN=MEAN
@@ -271,7 +281,6 @@ class ContrastiveHebbianMechanism(TransferMechanism):
     clip=[float:min, float:max],       \
     learning_rate=None,                \
     learning_function=Hebbian,         \
-    integrator_mode=False,             \
     params=None,                       \
     name=None,                         \
     prefs=None)
@@ -382,21 +391,17 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         Can be modified by control.
 
     initial_value :  value, list or np.ndarray : default Transfer_DEFAULT_BIAS
-        specifies the starting value for time-averaged input (only relevant if
-        `integrator_mode <ContrastiveHebbianMechanism.integrator_mode>` is True).
+        specifies the starting value for time-averaged input.
         COMMENT:
             Transfer_DEFAULT_BIAS SHOULD RESOLVE TO A VALUE
         COMMENT
 
     noise : float or function : default 0.0
-        a value added to the result of the `function <ContrastiveHebbianMechanism.function>` or to the result of
-        `integrator_function <ContrastiveHebbianMechanism.integrator_function>`, depending on whether `integrator_mode
-        <ContrastiveHebbianMechanism.integrator_mode>` is True or False. See `noise <ContrastiveHebbianMechanism.noise>`
-        for more details.
+        a value added to the result of the `function <ContrastiveHebbianMechanism.function>`. See `noise
+        <ContrastiveHebbianMechanism.noise>` for more details.
 
     smoothing_factor : float : default 0.5
-        the smoothing factor for exponential time averaging of input when `integrator_mode
-        <ContrastiveHebbianMechanism.integrator_mode>` is set to True::
+        the smoothing factor for exponential time averaging of input::
 
          result = (smoothing_factor * variable) +
          (1-smoothing_factor * input to mechanism's function on the previous time step)
@@ -467,14 +472,14 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         COMMENT
 
     integrator_function:
-        When *integrator_mode* is set to True, the ContrastiveHebbianMechanism executes its `integrator_function
-        <ContrastiveHebbianMechanism.integrator_function>`, which is the `AdaptiveIntegrator`. See `AdaptiveIntegrator
-        <AdaptiveIntegrator>` for more details on what it computes. Keep in mind that the `smoothing_factor
+        The `integrator_function <ContrastiveHebbianMechanism.integrator_function>` used by the Mechanism when it
+        executes, which is an `AdaptiveIntegrator <AdaptiveIntegrator>`. Keep in mind that the `smoothing_factor
         <ContrastiveHebbianMechanism.smoothing_factor>` parameter of the `ContrastiveHebbianMechanism` corresponds to
         the `rate <ContrastiveHebbianMechanismIntegrator.rate>` of the `ContrastiveHebbianMechanismIntegrator`.
 
+    COMMENT:
+    ALWAYS TRUE;  MOVE THIS TO MODULE DOCSTRING
     integrator_mode:
-        **When integrator_mode is set to True:**
 
         the variable of the mechanism is first passed into the following equation:
 
@@ -483,18 +488,11 @@ class ContrastiveHebbianMechanism(TransferMechanism):
 
         The result of the integrator function above is then passed into the `mechanism's function
         <ContrastiveHebbianMechanism.function>`. Note that on the first execution, *initial_value* sets previous_value.
-
-        **When integrator_mode is set to False:**
-
-        The variable of the mechanism is passed into the `function of the Mechanism
-        <ContrastiveHebbianMechanism.function>`. The Mechanism's `integrator_function
-        <ContrastiveHebbianMechanism.integrator_function>` is skipped entirely, and all
-        related arguments (*noise*, *leak*, *initial_value*, and *time_step_size*) are ignored.
+    COMMENT
 
     noise : float or function : default 0.0
-        When `integrator_mode <ContrastiveHebbianMechanism.integrator_mode>` is set to True, noise is passed into the
-        `integrator_function <ContrastiveHebbianMechanism.integrator_function>`. Otherwise, noise is added to the output
-        of the `function <ContrastiveHebbianMechanism.function>`.
+        value passed to the `integrator_function <ContrastiveHebbianMechanism.integrator_function>` that is added to
+        the current input.
 
         If noise is a list or array, it must be the same length as `variable
         <ContrastiveHebbianMechanism.default_variable>`.
@@ -510,8 +508,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
             output, then the noise will simply be an offset that remains the same across all executions.
 
     smoothing_factor : float : default 0.5
-        the smoothing factor for exponential time averaging of input when `integrator_mode
-        <ContrastiveHebbianMechanism.integrator_mode>` is set to True::
+        the smoothing factor for exponential time averaging of input when::
 
           result = (smoothing_factor * current input) + (1-smoothing_factor * result on previous time_step)
 
@@ -631,7 +628,6 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                  initial_value=None,
                  noise=0.0,
                  smoothing_factor: is_numeric_or_none=0.5,
-                 integrator_mode=False,
                  clip=None,
                  input_states:tc.optional(tc.any(list, dict)) = None,
                  enable_learning:bool=False,
@@ -672,7 +668,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                          function=function,
                          initial_value=initial_value,
                          noise=noise,
-                         integrator_mode=integrator_mode,
+                         integrator_mode=True,
                          smoothing_factor=smoothing_factor,
                          clip=clip,
                          learning_rate=learning_rate,
@@ -761,10 +757,12 @@ class ContrastiveHebbianMechanism(TransferMechanism):
             # Terminate if this is the end of the minus phase
             if self.learning_phase == LearningPhase.MINUS:
                 self.is_finished = True
+                # JDC: NOT SURE THIS IS THE CORRECT THING TO DO
+                self.input_state.variable[INTERNAL] = self.output_states[PLUS_PHASE_ACTIVITY].value
 
-            # JDC: NOT SURE THIS IS THE CORRECT THING TO DO:
+            # JDC: NOT SURE THIS IS THE CORRECT THING TO DO;  MAYBE ONLY AT BEGINNING OF MINUS PHASE?
             # NOTE: "socket" is a convenience property = np.zeros(<InputState>.variable.shape[-1])
-            # Initialize internal input for next phase
+            # Initialize internal input to zero for next phase
             self.input_state.variable[INTERNAL] = self.input_state.socket
 
             # Switch learning phase
