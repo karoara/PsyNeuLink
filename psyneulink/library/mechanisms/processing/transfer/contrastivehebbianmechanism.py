@@ -542,7 +542,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         <AutoAssociativeLearningMechanism.learning_rate>` for details concerning specification and default value
         assignement).
 
-    learning_function : function : default Hebbian
+    learning_function : function : default ContrastiveHebbian
         the function used by the `learning_mechanism <ContrastiveHebbianMechanism.learning_mechanism>` to train the
         `recurrent_projection <ContrastiveHebbianMechanism.recurrent_projection>` if `learning is specified
         <ContrastiveHebbian_Learning>`.
