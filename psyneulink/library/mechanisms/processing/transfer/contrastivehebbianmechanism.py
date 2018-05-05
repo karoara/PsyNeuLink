@@ -632,7 +632,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                  enable_learning:bool=False,
                  learning_rate:tc.optional(tc.any(parameter_spec, bool))=None,
                  learning_function: tc.any(is_function_type) = ContrastiveHebbian,
-                 convergence_criterion=??DEFAULT VALUE or None??,
+                 convergence_criterion:float=0.01,
                  output_states:tc.optional(tc.any(str, Iterable))=RESULT,
                  params=None,
                  name=None,
