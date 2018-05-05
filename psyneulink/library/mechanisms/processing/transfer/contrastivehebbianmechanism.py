@@ -740,8 +740,10 @@ class ContrastiveHebbianMechanism(TransferMechanism):
             self.learning_phase = LearningPhase.PLUS
 
         if self.learning_phase == LearningPhase.PLUS:
+            self.finished = False
             current_activity = external_input + internal_input
-            initial_internal_activity = internal_input
+        else:
+            current_activity = internal_input
 
         value = super()._execute(self,
                                  variable=variable,
@@ -749,11 +751,18 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                                  runtime_params=runtime_params,
                                  context=context)
 
+        # Check for convergence
         if self.delta < self.convergence_criterion:
+
+            # Terminate if this is the end of the minus phase
             if self.learning_phase == LearningPhase.MINUS:
                 self.is_finished = True
-            # Initialize internal input
+
+            # JDC: NOT SURE THIS IS THE CORRECT THING TO DO:
+            # NOTE: "socket" is a convenience property = np.zeros(<InputState>.variable.shape[-1])
+            # Initialize internal input for next phase
             self.input_state.variable[1] = self.input_state.socket
+
             # Switch learning phase
             self.learning_phase = ~self.learning_phase
 
