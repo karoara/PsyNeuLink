@@ -185,6 +185,7 @@ __all__ = [
     'PLUS_PHASE_ACTIVITY', 'MINUS_PHASE_ACTIVITY'
 ]
 
+
 PLUS_PHASE_ACTIVITY = 'plus_phase_activity'
 MINUS_PHASE_ACTIVITY = 'minus_phase_activity'
 
@@ -193,6 +194,9 @@ class LearningPhase(IntEnum):
     MINUS = 1
     PLUS  = 0
 
+# Used to index items of InputState.variable corresponding to recurrent and external inputs
+INTERNAL = 0
+EXTERNAL = 1
 
 class RecurrentTransferError(Exception):
     def __init__(self, error_value):
@@ -734,8 +738,8 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                  runtime_params=None,
                  context=None):
 
-        internal_input =  self.input_state.variable[0]
-        external_input = self.input_state.variable[1]
+        internal_input =  self.input_state.variable[INTERNAL]
+        external_input = self.input_state.variable[EXTERNAL]
 
         if self.learning_phase is None:
             self.learning_phase = LearningPhase.PLUS
@@ -761,7 +765,7 @@ class ContrastiveHebbianMechanism(TransferMechanism):
             # JDC: NOT SURE THIS IS THE CORRECT THING TO DO:
             # NOTE: "socket" is a convenience property = np.zeros(<InputState>.variable.shape[-1])
             # Initialize internal input for next phase
-            self.input_state.variable[1] = self.input_state.socket
+            self.input_state.variable[INTERNAL] = self.input_state.socket
 
             # Switch learning phase
             self.learning_phase = ~self.learning_phase
