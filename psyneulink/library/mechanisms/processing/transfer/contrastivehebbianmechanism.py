@@ -5,7 +5,7 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-# ****************************************  ContrastiveHebbianMechanism *************************************************
+# **************************************** ContrastiveHebbianMechanism *************************************************
 
 """
 .. _ContrastiveHebbian_Overview:
@@ -198,9 +198,11 @@ class LearningPhase(IntEnum):
     MINUS = 1
     PLUS  = 0
 
+
 # Used to index items of InputState.variable corresponding to recurrent and external inputs
 INTERNAL = 0
 EXTERNAL = 1
+
 
 class RecurrentTransferError(Exception):
     def __init__(self, error_value):
@@ -248,8 +250,12 @@ class CONTRASTIVE_HEBBIAN_OUTPUT():
             (Note: this is only present if the Mechanism's `function` is bounded
             between 0 and 1 (e.g. the `Logistic` Function)).
 
+        .. PLUS_PHASE_ACTIVITY:
+
         *PLUS_PHASE_ACTIVITY* : 1d np.array
             The vector of activity at the end of the plus phase of a training trial.
+
+        .. MINUS_PHASE_ACTIVITY:
 
         *MINUS_PHASE_ACTIVITY* : 1d np.array
             The vector of activity at the end of the minus phase of a training trial.
