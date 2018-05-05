@@ -734,8 +734,8 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                  runtime_params=None,
                  context=None):
 
-        external_input = self.input_state.variable[0]
-        internal_input =  self.input_state.variable[1]
+        internal_input =  self.input_state.variable[0]
+        external_input = self.input_state.variable[1]
 
         if self.learning_phase is None:
             self.learning_phase = LearningPhase.PLUS
