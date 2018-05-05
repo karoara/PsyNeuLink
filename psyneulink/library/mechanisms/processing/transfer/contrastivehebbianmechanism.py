@@ -167,10 +167,9 @@ import numpy as np
 import typecheck as tc
 from enum import IntEnum
 
-from psyneulink.components.functions.function import ContrastiveHebbian, Linear, is_function_type
+from psyneulink.components.functions.function import Linear, is_function_type, Hebbian # ContrastiveHebbian
 from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import \
     ERROR_SIGNAL, LEARNING_SIGNAL, LearningMechanism
-from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.states.outputstate import PRIMARY, StandardOutputStates
@@ -180,6 +179,7 @@ from psyneulink.globals.keywords import \
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.utilities import is_numeric_or_none, parameter_spec
+from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
 from psyneulink.library.mechanisms.adaptive.learning.autoassociativelearningmechanism import \
     AutoAssociativeLearningMechanism
 from psyneulink.library.mechanisms.processing.objective.comparatormechanism import ComparatorMechanism
@@ -239,14 +239,12 @@ class CONTRASTIVE_HEBBIAN_OUTPUT():
         .. ENERGY:
 
         *ENERGY* : float
-            the energy of the result, which is calculated using the `Stability
-            Function <Function.Stability.function>` with the ``ENERGY`` metric
+            the energy of the result, which is calculated using the `Stability` Function with the ``ENERGY`` metric
 
         .. ENTROPY:
 
         *ENTROPY* : float
-            The entropy of the result, which is calculated using the `Stability
-            Function <Function.Stability.function>` with the ENTROPY metric
+            The entropy of the result, which is calculated using the `Stability` Function with the ENTROPY metric
             (Note: this is only present if the Mechanism's `function` is bounded
             between 0 and 1 (e.g. the `Logistic` Function)).
 
@@ -272,7 +270,7 @@ class CONTRASTIVE_HEBBIAN_OUTPUT():
 
 
 # IMPLEMENTATION NOTE:  IMPLEMENTS OFFSET PARAM BUT IT IS NOT CURRENTLY BEING USED
-class ContrastiveHebbianMechanism(TransferMechanism):
+class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
     """
     ContrastiveHebbianMechanism(       \
     default_variable=None,             \
@@ -316,8 +314,8 @@ class ContrastiveHebbianMechanism(TransferMechanism):
         specifies variable as array(s) of zeros if **variable** is not passed as an argument;
         if **variable** is specified, it takes precedence over the specification of **size**.
         As an example, the following mechanisms are equivalent::
-            T1 = TransferMechanism(size = [3, 2])
-            T2 = TransferMechanism(default_variable = [[0, 0, 0], [0, 0]])
+            T1 = ContrastiveHebbianMechanism(size = [3, 2])
+            T2 = ContrastiveHebbian(default_variable = [[0, 0, 0], [0, 0]])
 
     function : TransferFunction : default Linear
         specifies the function used to transform the input;  can be `Linear`, `Logistic`, `Exponential`,
@@ -609,12 +607,12 @@ class ContrastiveHebbianMechanism(TransferMechanism):
     """
     componentType = CONTRASTIVE_HEBBIAN_MECHANISM
 
-    class ClassDefaults(TransferMechanism.ClassDefaults):
+    class ClassDefaults(RecurrentTransferMechanism.ClassDefaults):
         variable = np.array([[0]])
 
-    paramClassDefaults = TransferMechanism.paramClassDefaults.copy()
+    paramClassDefaults = RecurrentTransferMechanism.paramClassDefaults.copy()
 
-    standard_output_states = TransferMechanism.standard_output_states.copy()
+    standard_output_states = RecurrentTransferMechanism.standard_output_states.copy()
     standard_output_states.extend([{NAME:ENERGY},
                                    {NAME:ENTROPY},
                                    {NAME:PLUS_PHASE_ACTIVITY,
@@ -638,7 +636,8 @@ class ContrastiveHebbianMechanism(TransferMechanism):
                  input_states:tc.optional(tc.any(list, dict)) = None,
                  enable_learning:bool=False,
                  learning_rate:tc.optional(tc.any(parameter_spec, bool))=None,
-                 learning_function: tc.any(is_function_type) = ContrastiveHebbian,
+                 # learning_function: tc.any(is_function_type) = ContrastiveHebbian,
+                 learning_function: tc.any(is_function_type) = Hebbian,
                  convergence_criterion:float=0.01,
                  output_states:tc.optional(tc.any(str, Iterable))=RESULT,
                  params=None,
