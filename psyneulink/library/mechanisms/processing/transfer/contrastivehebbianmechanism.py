@@ -5,12 +5,6 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-# NOTES:
-#  * COULD NOT IMPLEMENT integrator_function in paramClassDefaults (see notes below)
-#  * NOW THAT NOISE AND SMOOTHING_FACTOR ARE PROPRETIES THAT DIRECTLY REFERERNCE integrator_function,
-#      SHOULD THEY NOW BE VALIDATED ONLY THERE (AND NOT IN TransferMechanism)??
-#  * ARE THOSE THE ONLY TWO integrator PARAMS THAT SHOULD BE PROPERTIES??
-
 # ****************************************  ContrastiveHebbianMechanism *************************************************
 
 """
@@ -19,11 +13,22 @@
 Overview
 --------
 
-A ContrastiveHebbianMechanism is a subclass of `TransferMechanism` that implements a single-layered recurrent
-network, in which each element is connected to every other element (instantiated in a recurrent
-`AutoAssociativeProjection` referenced by the Mechanism's `matrix <ContrastiveHebbianMechanism.matrix>` parameter).
-It can report the energy and, if appropriate, the entropy of its output, and can be configured to implement
-autoassociative (e.g., Hebbian) learning.
+A ContrastiveHebbianMechanism is a subclass of `RecurrentTransferMechanism` that implements a single-layered recurrent
+network and the Contrastive Hebbian learning rule.  See the following references for a description of the learning rule,
+its relationship to the backpropagation learning rule, and its use in connectionist networks:
+
+  `Movellan, J. R. (1991). Contrastive Hebbian learning in the continuous Hopfield model. In Connectionist Models
+  (pp. 10-17) <https://www.sciencedirect.com/science/article/pii/B978148321448150007X>`_
+
+  `Xie, X., & Seung, H. S. (2003). Equivalence of backpropagation and contrastive Hebbian learning in a layered network.
+  Neural computation, 15(2), 441-454 <https://www.mitpressjournals.org/doi/abs/10.1162/089976603762552988>`_
+
+  `O'reilly, R. C. (2001). Generalization in interactive networks: The benefits of inhibitory competition and Hebbian
+  learning. Neural computation, 13(6), 1199-1241 <https://www.mitpressjournals.org/doi/abs/10.1162/08997660152002834>`_
+
+  `Verguts, T., & Notebaert, W. (2008). Hebbian learning of cognitive control: dealing with specific and nonspecific
+  adaptation. Psychological review, 115(2), 518 <http://psycnet.apa.org/record/2008-04236-010>`_
+
 
 .. _ContrastiveHebbian_Creation:
 
@@ -74,8 +79,8 @@ A ContrastiveHebbianMechanism can be configured for learning when it is created 
 **enable_learning** argument of its constructor.  This creates an `AutoAssociativeLearningMechanism` that is used to
 train its `recurrent_projection <ContrastiveHebbianMechanism.recurrent_projection>`, and assigns as its `function
 <Function_Base.function>` the one  specified in the **learning_function** argument of the ContrastiveHebbianMechanism's
-constructor.  By default, this is the `Hebbian` Function;  however, it can be replaced by any other function that is
-suitable for autoassociative learning;  that is, one that takes a list or 1d array of numeric values
+constructor.  By default, this is the `ContrastiveHebbian` Function;  however, it can be replaced by any other function
+that is suitable for autoassociative learning;  that is, one that takes a list or 1d array of numeric values
 (an "activity vector") and returns a 2d array or square matrix (the "weight change matrix") with the same dimensions
 as the length of the activity vector. The AutoAssociativeLearningMechanism is assigned to the `learning_mechanism
 <ContrastiveHebbianMechanism.learning_mechanism>` attribute and is used to modify the `matrix
@@ -88,15 +93,6 @@ in its constructor -- the default value), then learning cannot be enabled for th
 configured for learning;  any attempt to do so will issue a warning and then be ignored.  Learning can be configured
 once the Mechanism has been created by calling its `configure_learning <ContrastiveHebbianMechanism.configure_learning>`
 method, which also enables learning.
-
-COMMENT:
-8/7/17 CW: In past versions, the first sentence of the paragraph above was: "A ContrastiveHebbianMechanism can be
-created directly by calling its constructor, or using the `mechanism() <Mechanism.mechanism>` command and specifying
-ContrastiveHebbian_MECHANISM as its **mech_spec** argument".
-However, the latter method is no longer correct: it instead creates a DDM: the problem is line 590 in Mechanism.py,
-as MechanismRegistry is empty!
-10/9/17 MANTEL: mechanism() factory method is removed
-COMMENT
 
 .. _ContrastiveHebbian_Structure:
 
