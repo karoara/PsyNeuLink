@@ -167,7 +167,7 @@ import numpy as np
 import typecheck as tc
 from enum import IntEnum
 
-from psyneulink.components.functions.function import Linear, is_function_type, Hebbian # ContrastiveHebbian
+from psyneulink.components.functions.function import Linear, is_function_type, ContrastiveHebbian
 from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import \
     ERROR_SIGNAL, LEARNING_SIGNAL, LearningMechanism
 from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
@@ -272,21 +272,21 @@ class CONTRASTIVE_HEBBIAN_OUTPUT():
 # IMPLEMENTATION NOTE:  IMPLEMENTS OFFSET PARAM BUT IT IS NOT CURRENTLY BEING USED
 class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
     """
-    ContrastiveHebbianMechanism(       \
-    default_variable=None,             \
-    size=None,                         \
-    function=Linear,                   \
-    matrix=HOLLOW_MATRIX,              \
-    auto=None,                         \
-    hetero=None,                       \
-    initial_value=None,                \
-    noise=0.0,                         \
-    smoothing_factor=0.5,              \
-    clip=[float:min, float:max],       \
-    learning_rate=None,                \
-    learning_function=Hebbian,         \
-    params=None,                       \
-    name=None,                         \
+    ContrastiveHebbianMechanism(          \
+    default_variable=None,                \
+    size=None,                            \
+    function=Linear,                      \
+    matrix=HOLLOW_MATRIX,                 \
+    auto=None,                            \
+    hetero=None,                          \
+    initial_value=None,                   \
+    noise=0.0,                            \
+    smoothing_factor=0.5,                 \
+    clip=[float:min, float:max],          \
+    learning_rate=None,                   \
+    learning_function=ContrastiveHebbian, \
+    params=None,                          \
+    name=None,                            \
     prefs=None)
 
     Subclass of `TransferMechanism` that implements a single-layer auto-recurrent network.
@@ -428,7 +428,7 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         used; if it is assigned a value, that is used as the learning_rate (see `learning_rate
         <ContrastiveHebbianMechanism.learning_rate>` for details).
 
-    learning_function : function : default Hebbian
+    learning_function : function : default ContrastiveHebbian
         specifies the function for the LearningMechanism if `learning has been specified
         <ContrastiveHebbian_Learning>` for the ContrastiveHebbianMechanism.  It can be any function so long as it
         takes a list or 1d array of numeric values as its `variable <Function_Base.variable>` and returns a sqaure
@@ -636,13 +636,13 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                  input_states:tc.optional(tc.any(list, dict)) = None,
                  enable_learning:bool=False,
                  learning_rate:tc.optional(tc.any(parameter_spec, bool))=None,
-                 # learning_function: tc.any(is_function_type) = ContrastiveHebbian,
-                 learning_function: tc.any(is_function_type) = Hebbian,
+                 learning_function: tc.any(is_function_type) = ContrastiveHebbian,
                  convergence_criterion:float=0.01,
                  output_states:tc.optional(tc.any(str, Iterable))=RESULT,
                  params=None,
                  name=None,
                  prefs: is_pref_set=None):
+
         """Instantiate ContrastiveHebbianMechanism
         """
         # Default output_states is specified in constructor as a string rather than a list
