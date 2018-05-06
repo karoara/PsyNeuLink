@@ -762,6 +762,9 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                                  runtime_params=runtime_params,
                                  context=context)
 
+        if not self.context.execution_phase & ContextFlags.EXECUTING:
+            return self.input_state.value
+
         # Check for convergence
         if self.delta < self.convergence_criterion:
 
