@@ -757,13 +757,10 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         else:
             current_activity = internal_input
 
-        value = super()._execute(variable=variable,
-                                 function_variable=current_activity,
-                                 runtime_params=runtime_params,
-                                 context=context)
-
-        if not self.context.execution_phase & ContextFlags.EXECUTING:
-            return self.input_state.value
+        self.value = super()._execute(variable=variable,
+                                      function_variable=current_activity,
+                                      runtime_params=runtime_params,
+                                      context=context)
 
         # Check for convergence
         if self.delta < self.convergence_criterion:
@@ -782,4 +779,4 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
             # Switch learning phase
             self.learning_phase = ~self.learning_phase
 
-        return value
+        return self.value
