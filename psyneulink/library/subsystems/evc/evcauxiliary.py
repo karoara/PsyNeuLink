@@ -188,14 +188,12 @@ class ValueFunction(EVCAuxiliaryFunction):
         if isinstance(cost_function, UserDefinedFunction):
             cost = cost_function._execute(controller=controller, costs=costs)
         else:
-            # cost = cost_function.function(variable=costs, context=context)
             cost = cost_function._execute(variable=costs, context=context)
 
         # Combine outcome and cost to determine value
         if isinstance(combine_function, UserDefinedFunction):
             value = combine_function._execute(controller=controller, outcome=outcome, cost=cost)
         else:
-            # value = combine_function.function(variable=[outcome, -cost])
             value = combine_function._execute(variable=[outcome, -cost])
 
         return (value, outcome, cost)
