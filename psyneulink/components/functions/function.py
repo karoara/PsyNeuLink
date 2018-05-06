@@ -54,6 +54,7 @@ Objective Functions:
 
 Learning Functions:
   * `Hebbian`
+  * `ContrastiveHebbian`
   * `Reinforcement`
   * `BackPropagation`
   * `TDLearning`
