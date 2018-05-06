@@ -190,8 +190,8 @@ __all__ = [
 ]
 
 
-PLUS_PHASE_ACTIVITY = 'plus_phase_activity'
-MINUS_PHASE_ACTIVITY = 'minus_phase_activity'
+PLUS_PHASE_ACTIVITY = 'plus_phase_activity_output'
+MINUS_PHASE_ACTIVITY = 'minus_phase_activity_output'
 
 
 class LearningPhase(IntEnum):
@@ -688,8 +688,6 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
         super()._instantiate_attributes_before_function(function=function, context=context)
         self.plus_phase_activity = None
         self.minus_phase_activity = None
-        self.attributes_dict.update({PLUS_PHASE_ACTIVITY:self.plus_phase_activity,
-                                     MINUS_PHASE_ACTIVITY:self.minus_phase_activity})
         self.learning_phase = None
 
     # IMPLEMENTATION NOTE: THIS SHOULD BE MOVED TO COMPOSITION WHEN THAT IS IMPLEMENTED
@@ -733,6 +731,11 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
 
         return learning_mechanism
 
+    def _instantiate_attributes_after_function(self, context=None):
+        super()._instantiate_attributes_after_function(context=context)
+        self.attributes_dict.update({PLUS_PHASE_ACTIVITY:self.plus_phase_activity,
+                             MINUS_PHASE_ACTIVITY:self.minus_phase_activity})
+
     def _execute(self,
                  variable=None,
                  function_variable=None,
@@ -740,7 +743,10 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                  context=None):
 
         internal_input =  self.input_state.variable[INTERNAL]
-        external_input = self.input_state.variable[EXTERNAL]
+        if self.context.flags_string == ContextFlags.EXECUTING:
+            external_input = self.input_state.variable[EXTERNAL]
+        else:
+            external_input = self.input_state.socket_template
 
         if self.learning_phase is None:
             self.learning_phase = LearningPhase.PLUS
@@ -766,9 +772,9 @@ class ContrastiveHebbianMechanism(RecurrentTransferMechanism):
                 self.input_state.variable[INTERNAL] = self.output_states[PLUS_PHASE_ACTIVITY].value
 
             # JDC: NOT SURE THIS IS THE CORRECT THING TO DO;  MAYBE ONLY AT BEGINNING OF MINUS PHASE?
-            # NOTE: "socket" is a convenience property = np.zeros(<InputState>.variable.shape[-1])
+            # NOTE: "socket_template" is a convenience property = np.zeros(<InputState>.variable.shape[-1])
             # Initialize internal input to zero for next phase
-            self.input_state.variable[INTERNAL] = self.input_state.socket
+            self.input_state.variable[INTERNAL] = self.input_state.socket_template
 
             # Switch learning phase
             self.learning_phase = ~self.learning_phase
