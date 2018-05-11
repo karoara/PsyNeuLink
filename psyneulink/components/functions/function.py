@@ -198,7 +198,7 @@ from psyneulink.globals.keywords import ACCUMULATOR_INTEGRATOR_FUNCTION, ADAPTIV
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set, kpReportOutputPref
 from psyneulink.globals.preferences.preferenceset import PreferenceEntry, PreferenceLevel
 from psyneulink.globals.registry import register_category
-from psyneulink.globals.utilities import is_distance_metric, is_iterable, is_matrix, is_numeric, iscompatible, np_array_less_than_2d, parameter_spec
+from psyneulink.globals.utilities import is_distance_metric, is_iterable, is_matrix, is_numeric, iscompatible, np_array_less_than_2d, parameter_spec, prune_unused_args
 
 __all__ = [
     'AccumulatorIntegrator', 'AdaptiveIntegrator', 'ADDITIVE', 'ADDITIVE_PARAM',
@@ -1420,10 +1420,11 @@ class UserDefinedFunction(Function_Base):
             # Otherwise, get current value from ParameterState (in case it is being modulated by ControlSignal(s)
                 self.cust_fct_params[param] = self.get_current_function_param(param)
         kwargs.update(self.cust_fct_params)
+        _, kwargs_pruned = prune_unused_args(self.custom_function, args=[], kwargs=kwargs)
 
         try:
             # Try calling with full list of args (including context and params)
-            return self.custom_function(**kwargs)
+            return self.custom_function(**kwargs_pruned)
         except TypeError:
             # Try calling with just variable and cust_fct_params
             return self.custom_function(kwargs[VARIABLE], **self.cust_fct_params)
