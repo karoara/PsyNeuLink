@@ -1070,8 +1070,11 @@ class Composition(object):
                                 execution_runtime_params[param] = runtime_params[mechanism][param][0]
 
                     mechanism.context.execution_phase = ContextFlags.PROCESSING
-                    num = mechanism.execute(runtime_params=execution_runtime_params,
-                                            context=ContextFlags.COMPOSITION)
+                    num = mechanism.execute(
+                        runtime_params=execution_runtime_params,
+                        execution_id=execution_id,
+                        context=ContextFlags.COMPOSITION
+                    )
 
                     for key in mechanism._runtime_params_reset:
                         mechanism._set_parameter_value(key, mechanism._runtime_params_reset[key])

@@ -2291,7 +2291,7 @@ class Mechanism_Base(Mechanism):
         # Set status based on whether self.value has changed
         self.status = value
 
-        self.value = value
+        self.parameters.value.set(value, execution_context=execution_id, override=True)
 
         # UPDATE OUTPUT STATE(S)
         self._update_output_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
@@ -2305,7 +2305,7 @@ class Mechanism_Base(Mechanism):
             self._increment_execution_count()
             self._update_current_execution_time(context=context)
 
-        return self.value
+        return value
 
     def run(
         self,

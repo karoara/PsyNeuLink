@@ -584,17 +584,17 @@ Class Reference
 
 """
 
-import warnings
-
+import functools
 import numpy as np
 import typecheck as tc
+import warnings
 
 from psyneulink.components.component import Component, ComponentError, Param
 from psyneulink.components.functions.function import Function, OneHot, function_type, method_type
 from psyneulink.components.shellclasses import Mechanism
 from psyneulink.components.states.state import State_Base, _instantiate_state_list, state_type_keywords
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import ALL, ASSIGN, CALCULATE, COMMAND_LINE, FUNCTION, GATING_SIGNAL, INDEX, INPUT_STATE, INPUT_STATES, MAPPING_PROJECTION, MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, MEAN, MECHANISM_VALUE, MEDIAN, NAME, OUTPUT_STATE, OUTPUT_STATE_PARAMS, OWNER_VALUE, PARAMS, PARAMS_DICT, PROB, PROJECTION, PROJECTIONS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, RESULT, STANDARD_DEVIATION, STANDARD_OUTPUT_STATES, STATE, VALUE, VARIABLE, VARIANCE
+from psyneulink.globals.keywords import ALL, ASSIGN, CALCULATE, COMMAND_LINE, FUNCTION, GATING_SIGNAL, INDEX, INPUT_STATE, INPUT_STATES, MAPPING_PROJECTION, MAX_ABS_INDICATOR, MAX_ABS_VAL, MAX_INDICATOR, MAX_VAL, MEAN, MECHANISM_VALUE, MEDIAN, NAME, OUTPUT_STATE, OUTPUT_STATE_PARAMS, OWNER_VALUE, PARAMS, PARAMS_DICT, PROB, PROJECTION, PROJECTIONS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, RESULT, STANDARD_DEVIATION, STANDARD_OUTPUT_STATES, STATE, VALUE, VARIABLE, VARIANCE, output_state_spec_to_parameter_name
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import UtilitiesError, is_numeric, iscompatible, make_readonly_property, recursive_update
@@ -675,10 +675,11 @@ def _parse_output_state_variable(variable, owner, execution_id=None, output_stat
             return spec
         elif isinstance(spec, tuple):
             # Tuple indexing item of owner's attribute (e.g.,: OWNER_VALUE, int))
+            owner_param_name = output_state_spec_to_parameter_name[spec[0]]
             try:
-                return owner.attributes_dict[spec[0]][spec[1]]
+                return getattr(owner.parameters, owner_param_name).get(execution_id)[spec[1]]
             except TypeError:
-                if owner.attributes_dict[spec[0]] is None:
+                if getattr(owner.parameters, owner_param_name).get(execution_id) is None:
                     return None
                 else:
                     # raise OutputStateError("Can't parse variable ({}) for {} of {}".
@@ -711,6 +712,7 @@ def _parse_output_state_variable(variable, owner, execution_id=None, output_stat
     for spec in variable:
         fct_variable.append(parse_variable_spec(spec))
     return fct_variable
+
 
 
 class OutputStateError(Exception):
@@ -987,8 +989,15 @@ class OutputState(State_Base):
             else:
                 variable = reference_value
         # MODIFIED 3/10/18 OLD:
+        variable_getter = None
+        self._variable_spec = variable
+
         if not is_numeric(variable):
             self._variable = variable
+            # can't assign here because .parameters has not been initialized for this instance yet,
+            # so it still refers to the class parameters
+            variable_getter = functools.partial(self.parameters.variable.getter, variable=self._variable_spec)
+
         # # MODIFIED 3/10/18 NEW:
         # # FIX: SHOULD HANDLE THIS MORE GRACEFULLY IN _instantiate_state and/or instaniate_output_state
         # # If variable is numeric, assume it is a default spec passed in that had been parsed for initializatoin purposes
@@ -1016,6 +1025,8 @@ class OutputState(State_Base):
                          context=context,
                          function=function,
                          )
+
+        self.parameters.variable.getter = variable_getter
 
     def _validate_against_reference_value(self, reference_value):
         """Validate that State.variable is compatible with the reference_value
@@ -1205,22 +1216,6 @@ class OutputState(State_Base):
                 variable = self.parameters.variable.get(execution_id)
             except ComponentError:
                 variable = None
-
-            # If variable is not specified, check if OutputState has index attribute
-            #    (for backward compatibility with INDEX and ASSIGN)
-            if variable is None:
-                try:
-                    # Get indexed item of owner's value
-                    variable = self.owner.value[self.index]
-                except IndexError:
-                    # Index is ALL, so use owner's entire value
-                    if self.index is ALL:
-                        variable = self.owner.value
-                    else:
-                        raise IndexError
-                except AttributeError:
-                    raise OutputStateError("PROGRAM ERROR: Failure to parse variable for {} of {}".
-                                           format(self.name, self.owner.name))
 
         return super()._execute(
             variable=variable,

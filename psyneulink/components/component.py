@@ -2936,13 +2936,15 @@ class Component(object, metaclass=ComponentsMeta):
         raise ComponentError("{} class does not support initialize() method".format(self.__class__.__name__))
 
     def execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
-        return self._execute(variable=variable, execution_id=execution_id, runtime_params=runtime_params, context=context)
+        value = self._execute(variable=variable, execution_id=execution_id, runtime_params=runtime_params, context=context)
+        self.parameters.value.set(value, execution_context=execution_id, override=True)
+        return value
 
     def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None, **kwargs):
-
-        # GET/SET CONTEXT
-
         from psyneulink.components.functions.function import Function
+
+        self.parameters.variable.set(variable, execution_context=execution_id, override=True)
+
         if isinstance(self, Function):
             pass # Functions don't have a Logs or maintain execution_counts or time
         else:
@@ -3025,12 +3027,8 @@ class Component(object, metaclass=ComponentsMeta):
             Used to mirror assignments to local variable in an attribute
             Knowingly not threadsafe
         '''
-        self._variable = value
+        self.variable = value
         return value
-
-    @property
-    def variable(self):
-        return self._variable
 
     def _change_function(self, to_function):
         pass
