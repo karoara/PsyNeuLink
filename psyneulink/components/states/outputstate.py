@@ -589,7 +589,7 @@ import warnings
 import numpy as np
 import typecheck as tc
 
-from psyneulink.components.component import Component
+from psyneulink.components.component import Component, ComponentError, Param
 from psyneulink.components.functions.function import Function, OneHot, function_type, method_type
 from psyneulink.components.shellclasses import Mechanism
 from psyneulink.components.states.state import State_Base, _instantiate_state_list, state_type_keywords
@@ -660,13 +660,65 @@ standard_output_states = [{NAME: RESULT},
                           ]
 
 
+def _parse_output_state_variable(variable, owner, execution_id=None, output_state_name=None):
+    """Return variable for OutputState based on VARIABLE entry of owner's params dict
+
+    The format of the VARIABLE entry determines the format returned:
+    - if it is a single item, or a single item in a list, a single item is returned;
+    - if it is a list with more than one item, a list is returned.
+    :return:
+    """
+
+    def parse_variable_spec(spec):
+        from psyneulink.components.mechanisms.mechanism import MechParamsDict
+        if spec is None or is_numeric(spec) or isinstance(spec, MechParamsDict):
+            return spec
+        elif isinstance(spec, tuple):
+            # Tuple indexing item of owner's attribute (e.g.,: OWNER_VALUE, int))
+            try:
+                return owner.attributes_dict[spec[0]][spec[1]]
+            except TypeError:
+                if owner.attributes_dict[spec[0]] is None:
+                    return None
+                else:
+                    # raise OutputStateError("Can't parse variable ({}) for {} of {}".
+                    #                        format(spec, output_state_name or OutputState.__name__, owner.name))
+                    raise Exception
+            except:
+                raise OutputStateError("Can't parse variable ({}) for {} of {}".
+                                       format(spec, output_state_name or OutputState.__name__, owner.name))
+
+        elif isinstance(spec, str) and spec == PARAMS_DICT:
+            # Specifies passing owner's params_dict as variable
+            return owner.attributes_dict
+        elif isinstance(spec, str):
+            # Owner's full value or attribute other than its value
+            return owner.attributes_dict[spec]
+        else:
+            raise OutputStateError("\'{}\' entry for {} specification dictionary of {} ({}) must be "
+                                   "numeric or a list of {} attribute names".
+                                   format(VARIABLE.upper(),
+                                          output_state_name or OutputState.__name__,
+                                          owner.name, spec,
+                                          owner.__class__.__name__))
+    if not isinstance(variable, list):
+        variable = [variable]
+
+    if len(variable)== 1:
+        return parse_variable_spec(variable[0])
+
+    fct_variable = []
+    for spec in variable:
+        fct_variable.append(parse_variable_spec(spec))
+    return fct_variable
+
+
 class OutputStateError(Exception):
     def __init__(self, error_value):
         self.error_value = error_value
 
     def __str__(self):
         return repr(self.error_value)
-
 
 class OutputState(State_Base):
     """
@@ -866,6 +918,9 @@ class OutputState(State_Base):
     #     kwPreferenceSetName: 'OutputStateCustomClassPreferences',
     #     kp<pref>: <setting>...}
 
+    class Params(State_Base.Params):
+        variable = Param(np.array([0]), read_only=True, getter=_parse_output_state_variable)
+
     paramClassDefaults = State_Base.paramClassDefaults.copy()
     paramClassDefaults.update({PROJECTION_TYPE: MAPPING_PROJECTION,
                                # DEFAULT_VARIABLE_SPEC: [(OWNER_VALUE, 0)]
@@ -1031,7 +1086,7 @@ class OutputState(State_Base):
         return mechanism.output_state
 
     def _parse_arg_variable(self, default_variable):
-        return _parse_output_state_variable(self.owner, default_variable)
+        return _parse_output_state_variable(default_variable, self.owner)
 
     @tc.typecheck
     def _parse_state_specific_specs(self, owner, state_dict, state_specific_spec):
@@ -1060,7 +1115,7 @@ class OutputState(State_Base):
         state_spec = state_specific_spec
 
         if isinstance(state_specific_spec, dict):
-            # state_dict[VARIABLE] = _parse_output_state_variable(owner, state_dict[VARIABLE])
+            # state_dict[VARIABLE] = _parse_output_state_variable(state_dict[VARIABLE], owner)
             # # MODIFIED 3/10/18 NEW:
             # if state_dict[VARIABLE] is None:
             #     state_dict[VARIABLE] = DEFAULT_VARIABLE_SPEC
@@ -1132,7 +1187,7 @@ class OutputState(State_Base):
                     tuple_variable_spec = (OWNER_VALUE, tuple_variable_spec)
 
                 # validate that it is a legitimate spec
-                _parse_output_state_variable(owner, tuple_variable_spec)
+                _parse_output_state_variable(tuple_variable_spec, owner)
 
                 params_dict[VARIABLE] = tuple_variable_spec
 
@@ -1146,7 +1201,10 @@ class OutputState(State_Base):
     def _execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
         if variable is None:
             # fall back to specified item(s) of owner's value
-            variable = self.parameters.variable.get(execution_id)
+            try:
+                variable = self.parameters.variable.get(execution_id)
+            except ComponentError:
+                variable = None
 
             # If variable is not specified, check if OutputState has index attribute
             #    (for backward compatibility with INDEX and ASSIGN)
@@ -1173,7 +1231,7 @@ class OutputState(State_Base):
 
     @staticmethod
     def _get_state_function_value(owner, function, variable):
-        fct_variable = _parse_output_state_variable(owner, variable)
+        fct_variable = _parse_output_state_variable(variable, owner)
 
         # If variable has not been specified, assume it is the default of (OWNER_VALUE,0), and use that value
         if fct_variable is None:
@@ -1200,7 +1258,7 @@ class OutputState(State_Base):
 
     @property
     def variable(self):
-        return _parse_output_state_variable(self.owner, self._variable)
+        return _parse_output_state_variable(self._variable, self.owner)
 
     @variable.setter
     def variable(self, variable):
@@ -1377,7 +1435,7 @@ def _instantiate_output_states(owner, output_states=None, context=None):
                                                                                output_state[FUNCTION],
                                                                                output_state[VARIABLE])
                 else:
-                    output_state_value = _parse_output_state_variable(owner, output_state[VARIABLE])
+                    output_state_value = _parse_output_state_variable(output_state[VARIABLE], owner)
                 output_state[VALUE] = output_state_value
 
             output_states[i] = output_state
@@ -1583,60 +1641,6 @@ class StandardOutputStates():
     # @property
     # def indices(self):
     #     return [item[INDEX] for item in self.data]
-
-
-def _parse_output_state_variable(owner, variable, execution_id=None, output_state_name=None):
-    """Return variable for OutputState based on VARIABLE entry of owner's params dict
-
-    The format of the VARIABLE entry determines the format returned:
-    - if it is a single item, or a single item in a list, a single item is returned;
-    - if it is a list with more than one item, a list is returned.
-    :return:
-    """
-
-    def parse_variable_spec(spec):
-        from psyneulink.components.mechanisms.mechanism import MechParamsDict
-        if spec is None or is_numeric(spec) or isinstance(spec, MechParamsDict):
-            return spec
-        elif isinstance(spec, tuple):
-            # Tuple indexing item of owner's attribute (e.g.,: OWNER_VALUE, int))
-            try:
-                return owner.attributes_dict[spec[0]][spec[1]]
-            except TypeError:
-                if owner.attributes_dict[spec[0]] is None:
-                    return None
-                else:
-                    # raise OutputStateError("Can't parse variable ({}) for {} of {}".
-                    #                        format(spec, output_state_name or OutputState.__name__, owner.name))
-                    raise Exception
-            except:
-                raise OutputStateError("Can't parse variable ({}) for {} of {}".
-                                       format(spec, output_state_name or OutputState.__name__, owner.name))
-
-        elif isinstance(spec, str) and spec == PARAMS_DICT:
-            # Specifies passing owner's params_dict as variable
-            return owner.attributes_dict
-        elif isinstance(spec, str):
-            # Owner's full value or attribute other than its value
-            return owner.attributes_dict[spec]
-        else:
-            raise OutputStateError("\'{}\' entry for {} specification dictionary of {} ({}) must be "
-                                   "numeric or a list of {} attribute names".
-                                   format(VARIABLE.upper(),
-                                          output_state_name or OutputState.__name__,
-                                          owner.name, spec,
-                                          owner.__class__.__name__))
-    if not isinstance(variable, list):
-        variable = [variable]
-
-    if len(variable)== 1:
-        return parse_variable_spec(variable[0])
-
-    fct_variable = []
-    for spec in variable:
-        fct_variable.append(parse_variable_spec(spec))
-    return fct_variable
-
 
 def _parse_output_state_function(owner, output_state_name, function, params_dict_as_variable=False):
     """ Parse specification of function as Function, Function class, Function.function, function_type or method_type.
