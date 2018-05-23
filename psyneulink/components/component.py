@@ -1897,7 +1897,7 @@ class Component(object, metaclass=ComponentsMeta):
                         context=ContextFlags.EXECUTING)
                     self.owner.parameter_states[param].value = new_state_value
 
-    def _check_args(self, variable=None, params=None, target_set=None, context=None):
+    def _check_args(self, variable=None, execution_id=None, params=None, target_set=None, context=None):
         """validate variable and params, instantiate variable (if necessary) and assign any runtime params.
 
         Called by functions to validate variable and params
@@ -1923,13 +1923,13 @@ class Component(object, metaclass=ComponentsMeta):
         if variable is None:
             try:
                 # assigned by the Function class init when initializing
-                variable = self._update_variable(self.instance_defaults.variable)
+                variable = self.instance_defaults.variable
             except AttributeError:
-                variable = self._update_variable(self.ClassDefaults.variable)
+                variable = self.ClassDefaults.variable
 
         # If the variable is a function, call it
         if callable(variable):
-            variable = self._update_variable(variable())
+            variable = variable()
 
         # Validate variable if parameter_validation is set and the function was called with a variable
         # IMPLEMENTATION NOTE:  context is used here just for reporting;  it is not tested in any of the methods called
@@ -1938,7 +1938,7 @@ class Component(object, metaclass=ComponentsMeta):
                 self.context.string = self.context.string + SEPARATOR_BAR + FUNCTION_CHECK_ARGS
             else:
                 self.context.string = FUNCTION_CHECK_ARGS
-            variable = self._update_variable(self._validate_variable(variable, context=context))
+            variable = self._validate_variable(variable, context=context)
 
         # PARAMS ------------------------------------------------------------
 
@@ -1973,6 +1973,7 @@ class Component(object, metaclass=ComponentsMeta):
         elif runtime_params:    # not None
             raise ComponentError("Invalid specification of runtime parameters for {}".format(self.name))
 
+        self.parameters.variable.set(variable, execution_id=execution_id, override=True)
         return variable
 
     def _instantiate_defaults(self,
@@ -2054,13 +2055,13 @@ class Component(object, metaclass=ComponentsMeta):
                         format(self.name, self.shape, np.array(variable).shape))
             # Variable is not specified, so set to array of zeros with specified shape
             else:
-                variable = self._update_variable(np.zeros(self.shape))
+                variable = np.zeros(self.shape)
 
         # VALIDATE VARIABLE (if not called from assign_params)
 
         if not (context & (ContextFlags.COMMAND_LINE | ContextFlags.PROPERTY)):
             # if variable has been passed then validate and, if OK, assign as self.instance_defaults.variable
-            variable = self._update_variable(self._validate_variable(variable, context=context))
+            variable = self._validate_variable(variable, context=context)
 
         # If no params were passed, then done
         if request_set is None and target_set is None and default_set is None:
@@ -2493,13 +2494,13 @@ class Component(object, metaclass=ComponentsMeta):
         # Note: check for list is necessary since function references must be passed wrapped in a list so that they are
         #       not called before being passed
         if isinstance(variable, list) and callable(variable[0]):
-            variable = self._update_variable(variable[0]())
+            variable = variable[0]()
         # NOTE (7/24/17 CW): the above two lines of code can be commented out without causing any current tests to fail
         # So we should either write tests for this piece of code, or remove it.
         # Convert variable to np.ndarray
         # Note: this insures that variable will be AT LEAST 1D;  however, can also be higher:
         #       e.g., given a list specification of [[0],[0]], it will return a 2D np.array
-        variable = self._update_variable(convert_to_np_array(variable, 1))
+        variable = convert_to_np_array(variable, 1)
 
         # If self.ClassDefaults.variable is locked, then check that variable matches it
         if self.variableClassDefault_locked:
@@ -3025,14 +3026,6 @@ class Component(object, metaclass=ComponentsMeta):
         """Evaluate execute method
         """
         self.value = self.execute(context=context)
-
-    def _update_variable(self, value):
-        '''
-            Used to mirror assignments to local variable in an attribute
-            Knowingly not threadsafe
-        '''
-        self.variable = value
-        return value
 
     def _change_function(self, to_function):
         pass

@@ -691,7 +691,6 @@ class ObjectiveMechanism(ProcessingMechanism_Base):
         if len(self.input_states)==1 and self.input_state.name=='InputState-0' and not self.input_state.path_afferents:
             del self.input_states[0]
             self.instance_defaults.variable = []
-            self._update_variable(self.instance_defaults.variable)
 
         # Get reference value
         reference_value = []

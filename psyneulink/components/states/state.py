@@ -1168,7 +1168,7 @@ class State_Base(State):
                 size = checkAndCastInt(size)
             try:
                 if variable is not None:
-                    variable = self._update_variable(np.atleast_1d(variable))
+                    variable = np.atleast_1d(variable)
             except:
                 raise StateError("Failed to convert variable (of type {}) to a 1D array.".format(type(variable)))
             # endregion
@@ -1176,7 +1176,7 @@ class State_Base(State):
             # region if variable is None and size is not None, make variable a 1D array of zeros of length = size
             if variable is None and size is not None:
                 try:
-                    variable = self._update_variable(np.zeros(size))
+                    variable = np.zeros(size)
                 except:
                     raise ComponentError("variable (perhaps default_variable) was not specified, but PsyNeuLink "
                                          "was unable to infer variable from the size argument, {}. size should be"
@@ -1203,7 +1203,7 @@ class State_Base(State):
         Note:  this method (or the class version) is called only if the parameter_validation attribute is True
         """
 
-        variable = self._update_variable(super(State, self)._validate_variable(variable, context))
+        variable = super(State, self)._validate_variable(variable, context)
 
         return variable
 
@@ -1517,18 +1517,15 @@ class State_Base(State):
                     if variable.ndim == 1:
                         variable = np.atleast_2d(variable)
                     self.instance_defaults.variable = np.append(variable, np.atleast_2d(projection.instance_defaults.value), axis=0)
-                    self._update_variable(self.instance_defaults.variable)
 
                 # assign identical default variable to function_object if it can be modified
                 if self.function_object._default_variable_flexibility is DefaultsFlexibility.FLEXIBLE:
                     self.function_object.instance_defaults.variable = self.instance_defaults.variable.copy()
-                    self.function_object._update_variable(self.function_object.instance_defaults.variable)
                 elif (
                     self.function_object._default_variable_flexibility is DefaultsFlexibility.INCREASE_DIMENSION
                     and np.array([self.function_object.instance_defaults.variable]).shape == self.instance_defaults.variable.shape
                 ):
                     self.function_object.instance_defaults.variable = np.array([self.instance_defaults.variable])
-                    self.function_object._update_variable(self.function_object.instance_defaults.variable)
                 else:
                     warnings.warn(
                         'Adding a projection to {0}, but its function_object {1} instance_defaults.variable '
@@ -1779,7 +1776,7 @@ class State_Base(State):
                     if not iscompatible(self.value, projection.instance_defaults.variable):
                         raise StateError("Input to {} ({}) is not compatible with the value ({}) of "
                                          "the State from which it is supposed to project ({})".
-                                         format(projection.name, projection.variable, self.value, self.name))
+                                         format(projection.name, projection.instance_defaults.variable, self.value, self.name))
 
                     # Validate value:
                     #    - check that output of projection's function (projection_spec.value) is compatible with

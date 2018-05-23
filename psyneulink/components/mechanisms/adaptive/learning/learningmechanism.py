@@ -953,7 +953,7 @@ class LearningMechanism(AdaptiveMechanism_Base):
         """Validate that variable has exactly three items: activation_input, activation_output and error_signal
         """
 
-        variable = self._update_variable(super()._validate_variable(variable, context))
+        variable = super()._validate_variable(variable, context)
 
         if len(variable) < 3:
             raise LearningMechanismError("Variable for {} ({}) must have at least three items ({}, {}, and {}{})".

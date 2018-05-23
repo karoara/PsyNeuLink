@@ -1043,8 +1043,8 @@ class OutputState(State_Base):
 
         # If variable has not been assigned, or it is numeric (in which case it can be assumed that
         #    the value was a reference_value generated during initialization/parsing and passed in the constructor
-        if self._variable is None or is_numeric(self._variable):
-            self._variable = DEFAULT_VARIABLE_SPEC
+        # if self.instance_defaults.variable is None or is_numeric(self.instance_defaults.variable):
+        #     self.instance_defaults.variable = DEFAULT_VARIABLE_SPEC
 
     def _instantiate_projections(self, projections, context=None):
         """Instantiate Projections specified in PROJECTIONS entry of params arg of State's constructor
@@ -1232,10 +1232,10 @@ class OutputState(State_Base):
         if fct_variable is None:
             try:
                 if owner.value is not None:
-                    fct_variable = owner.value[0]
+                    fct_variable = owner.instance_defaults.value[0]
                 # Get owner's value by calling its function
                 else:
-                    fct_variable = owner.function(owner.variable)[0]
+                    fct_variable = owner.function(owner.instance_defaults.variable)[0]
             except AttributeError:
                 fct_variable = None
 
@@ -1259,17 +1259,6 @@ class OutputState(State_Base):
     def variable(self, variable):
         self._variable = variable
 
-    def _update_variable(self, value):
-        '''
-            Used to mirror assignments to local variable in an attribute
-            Knowingly not threadsafe
-        '''
-        try:
-            return self.variable
-        except AttributeError:
-            self._variable = value
-            return self.variable
-
     @property
     def socket_width(self):
         return self.value.shape[-1]
@@ -1286,12 +1275,12 @@ class OutputState(State_Base):
         - to no items of owner.value (but possibly other params), return None
         """
         # Entire owner.value
-        if isinstance(self._variable, str) and self.variable == OWNER_VALUE:
+        if isinstance(self._variable_spec, str) and self._variable_spec == OWNER_VALUE:
             return self.owner.value
-        elif isinstance(self._variable, tuple):
-            return self._variable[1]
-        elif isinstance(self._variable, list):
-            indices = [item[1] for item in self._variable if isinstance(item, tuple) and OWNER_VALUE in item]
+        elif isinstance(self._variable_spec, tuple):
+            return self._variable_spec[1]
+        elif isinstance(self._variable_spec, list):
+            indices = [item[1] for item in self._variable_spec if isinstance(item, tuple) and OWNER_VALUE in item]
             if len(indices)==1:
                 return indices[0]
             elif indices:

@@ -864,7 +864,7 @@ class ControlMechanism(AdaptiveMechanism_Base):
         self.value = self.instance_defaults.value
 
         # Assign ControlSignal's variable to index of owner's value
-        control_signal._variable = [(OWNER_VALUE, len(self.instance_defaults.value) - 1)]
+        control_signal._variable_spec = [(OWNER_VALUE, len(self.instance_defaults.value) - 1)]
         if not isinstance(control_signal.owner_value_index, int):
             raise ControlMechanismError(
                     "PROGRAM ERROR: The \'owner_value_index\' attribute for {} of {} ({})is not an int."

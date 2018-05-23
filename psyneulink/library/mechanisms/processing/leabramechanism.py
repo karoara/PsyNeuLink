@@ -260,7 +260,7 @@ class LeabraFunction(Function_Base):
                  execution_id=None,
                  params=None,
                  context=None):
-        variable = self._update_variable(self._check_args(variable=variable, params=params, context=context))
+        variable = self._check_args(variable=variable, execution_id=execution_id, params=params, context=context)
 
         # HACK: otherwise the INITIALIZING function executions impact the state of the leabra network
         if self.context.initialization_status == ContextFlags.INITIALIZING:

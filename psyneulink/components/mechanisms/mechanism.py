@@ -940,20 +940,13 @@ import typecheck as tc
 from psyneulink.components.component import Component, Param, function_type, method_type
 from psyneulink.components.functions.function import Linear
 from psyneulink.components.shellclasses import Function, Mechanism, Projection, State
-from psyneulink.components.states.inputstate import InputState, DEFER_VARIABLE_SPEC_TO_MECH_MSG
+from psyneulink.components.states.inputstate import DEFER_VARIABLE_SPEC_TO_MECH_MSG, InputState
 from psyneulink.components.states.modulatorysignals.modulatorysignal import _is_modulatory_spec
 from psyneulink.components.states.outputstate import OutputState
 from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.components.states.state import REMOVE_STATES, _parse_state_spec
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import \
-    CHANGED, COMMAND_LINE, EVC_SIMULATION, EXECUTING, EXECUTION_PHASE, FUNCTION, FUNCTION_PARAMS, \
-    INITIALIZATION_STATUS, INITIALIZING, INIT_FUNCTION_METHOD_ONLY, INIT__EXECUTE__METHOD_ONLY, \
-    INPUT_LABELS_DICT, INPUT_STATES, \
-    INPUT_STATE_PARAMS, LEARNING, MONITOR_FOR_CONTROL, MONITOR_FOR_LEARNING, \
-    OUTPUT_LABELS_DICT, OUTPUT_STATES, OUTPUT_STATE_PARAMS, PARAMETER_STATES, PARAMETER_STATE_PARAMS, \
-    PROCESS_INIT, REFERENCE_VALUE, SEPARATOR_BAR, SOURCE, SYSTEM_INIT, TARGET_LABELS_DICT, UNCHANGED, \
-    VALIDATE, VALUE, VARIABLE, kwMechanismComponentCategory, kwMechanismExecuteFunction
+from psyneulink.globals.keywords import CHANGED, COMMAND_LINE, EVC_SIMULATION, EXECUTING, EXECUTION_PHASE, FUNCTION, FUNCTION_PARAMS, INITIALIZATION_STATUS, INITIALIZING, INIT_FUNCTION_METHOD_ONLY, INIT__EXECUTE__METHOD_ONLY, INPUT_LABELS_DICT, INPUT_STATES, INPUT_STATE_PARAMS, LEARNING, MONITOR_FOR_CONTROL, MONITOR_FOR_LEARNING, OUTPUT_LABELS_DICT, OUTPUT_STATES, OUTPUT_STATE_PARAMS, PARAMETER_STATES, PARAMETER_STATE_PARAMS, PROCESS_INIT, REFERENCE_VALUE, SEPARATOR_BAR, SOURCE, SYSTEM_INIT, TARGET_LABELS_DICT, UNCHANGED, VALIDATE, VALUE, VARIABLE, kwMechanismComponentCategory, kwMechanismExecuteFunction
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category, remove_instance_from_registry
 from psyneulink.globals.utilities import ContentAddressableList, append_type_to_name, convert_to_np_array, iscompatible, kwCompatibilityNumeric
@@ -1630,10 +1623,10 @@ class Mechanism_Base(Mechanism):
         :return:
         """
 
-        variable = self._update_variable(super(Mechanism_Base, self)._validate_variable(variable, context))
+        variable = super(Mechanism_Base, self)._validate_variable(variable, context)
 
         # Force Mechanism variable specification to be a 2D array (to accomodate multiple InputStates - see above):
-        variable = self._update_variable(convert_to_np_array(variable, 2))
+        variable = convert_to_np_array(variable, 2)
 
         return variable
 
@@ -2242,8 +2235,7 @@ class Mechanism_Base(Mechanism):
             and (self.context.execution_phase & (ContextFlags.PROCESSING|ContextFlags.LEARNING|ContextFlags.SIMULATION))
             and (self.input_state.path_afferents != [])):
 
-            variable = self._update_variable(self._update_input_states(runtime_params=runtime_params,
-                                                                       context=context))
+            variable = self._update_input_states(runtime_params=runtime_params, context=context)
 
         # Direct call to execute Mechanism with specified input, so assign input to Mechanism's input_states
         else:
@@ -2251,7 +2243,7 @@ class Mechanism_Base(Mechanism):
                 self.context.execution_phase = ContextFlags.PROCESSING
             if input is None:
                 input = self.instance_defaults.variable
-            variable = self._update_variable(self._get_variable_from_input(input))
+            variable = self._get_variable_from_input(input)
 
         # UPDATE PARAMETER STATE(S)
         self._update_parameter_states(runtime_params=runtime_params, context=context)
@@ -2818,7 +2810,6 @@ class Mechanism_Base(Mechanism):
                 old_variable = self.instance_defaults.variable.tolist()
                 old_variable.extend(added_variable)
                 self.instance_defaults.variable = np.array(old_variable)
-                self._update_variable(self.instance_defaults.variable)
             instantiated_input_states = _instantiate_input_states(self,
                                                                   input_states,
                                                                   added_variable,
@@ -2878,7 +2869,6 @@ class Mechanism_Base(Mechanism):
                 old_variable = self.instance_defaults.variable
                 old_variable = np.delete(old_variable,index,0)
                 self.instance_defaults.variable = old_variable
-                self._update_variable(self.instance_defaults.variable)
 
             elif state in self.output_states:
                 if isinstance(state, OutputState):

@@ -2134,7 +2134,7 @@ class Process(Process_Base):
         self._check_args(self.input, runtime_params)
 
         # Use Process self.input as input to first Mechanism in Pathway
-        variable = self._update_variable(self.input)
+        variable = self.input
 
         # Generate header and report input
         if report_output:
@@ -2159,7 +2159,7 @@ class Process(Process_Base):
             if mechanism is self.first_mechanism and not self.clamp_input:
                 # Zero self.input to first mechanism after first run
                 #     in case it is repeated in the pathway or receives a recurrent Projection
-                variable = self._update_variable(variable * 0)
+                variable = variable * 0
 
         # Execute LearningMechanisms
         if self._learning_enabled:

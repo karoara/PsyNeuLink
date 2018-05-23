@@ -464,11 +464,7 @@ from psyneulink.components.functions.function import Function, Linear, LinearCom
 from psyneulink.components.states.outputstate import OutputState
 from psyneulink.components.states.state import StateError, State_Base, _instantiate_state_list, state_type_keywords
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import \
-    CLASS_DEFAULTS, COMBINE, COMMAND_LINE, EXPONENT, FUNCTION, GATING_SIGNAL, \
-    INPUT_STATE, INPUT_STATE_PARAMS, LEARNING_SIGNAL, MAPPING_PROJECTION, MATRIX, MECHANISM, OPERATION, \
-    OUTPUT_STATE, OUTPUT_STATES, PROCESS_INPUT_STATE, PRODUCT, PROJECTIONS, PROJECTION_TYPE, REFERENCE_VALUE, \
-    SENDER, SUM, SYSTEM_INPUT_STATE, VALUE, VARIABLE, WEIGHT
+from psyneulink.globals.keywords import CLASS_DEFAULTS, COMBINE, COMMAND_LINE, EXPONENT, FUNCTION, GATING_SIGNAL, INPUT_STATE, INPUT_STATE_PARAMS, LEARNING_SIGNAL, MAPPING_PROJECTION, MATRIX, MECHANISM, OPERATION, OUTPUT_STATE, OUTPUT_STATES, PROCESS_INPUT_STATE, PRODUCT, PROJECTIONS, PROJECTION_TYPE, REFERENCE_VALUE, SENDER, SUM, SYSTEM_INPUT_STATE, VALUE, VARIABLE, WEIGHT
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.utilities import append_type_to_name, is_instance_or_subclass, is_numeric, iscompatible
@@ -918,11 +914,6 @@ class InputState(State_Base):
             # TODO: stateful - this seems dangerous with statefulness,
             #       maybe safe when self.value is only passed or stateful
             variable = np.asarray(self._path_proj_values)
-            # MODIFIED 5/4/18 OLD:
-            # self._update_variable(variable[0])
-            # MODIFIED 5/4/18 NEW:
-            self._update_variable(variable)
-            # MODIFIED 5/4/18 END
             combined_values = super()._execute(variable=variable,
                                                execution_id=execution_id,
                                                runtime_params=runtime_params,
