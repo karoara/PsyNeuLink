@@ -1,5 +1,6 @@
 import functools
 import logging
+
 from timeit import timeit
 
 import numpy as np
@@ -7,19 +8,19 @@ import pytest
 
 from psyneulink.components.functions.function import Linear, SimpleIntegrator
 from psyneulink.components.mechanisms.processing.integratormechanism import IntegratorMechanism
-from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism, TRANSFER_OUTPUT
 from psyneulink.components.mechanisms.processing.processingmechanism import ProcessingMechanism
-from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
+from psyneulink.components.mechanisms.processing.transfermechanism import TRANSFER_OUTPUT, TransferMechanism
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.states.inputstate import InputState
 from psyneulink.compositions.composition import Composition, CompositionError, MechanismRole
 from psyneulink.compositions.pathwaycomposition import PathwayComposition
 from psyneulink.compositions.systemcomposition import SystemComposition
+from psyneulink.globals.keywords import HARD_CLAMP, INPUT_STATE, NAME, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
+from psyneulink.library.mechanisms.processing.transfer.recurrenttransfermechanism import RecurrentTransferMechanism
+from psyneulink.scheduling.condition import AfterNCalls, EveryNPasses
 from psyneulink.scheduling.condition import EveryNCalls
 from psyneulink.scheduling.scheduler import Scheduler
-from psyneulink.scheduling.condition import EveryNPasses, AfterNCalls
 from psyneulink.scheduling.time import TimeScale
-from psyneulink.globals.keywords import NAME, INPUT_STATE, HARD_CLAMP, SOFT_CLAMP, NO_CLAMP, PULSE_CLAMP
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,21 @@ logger = logging.getLogger(__name__)
 # see http://doc.pytest.org/en/latest/skipping.html
 
 
+def record_values(d, time_scale, *mechs, execution_id=None):
+    if time_scale not in d:
+        d[time_scale] = {}
+    for mech in mechs:
+        if mech not in d[time_scale]:
+            d[time_scale][mech] = []
+        mech_value = mech.parameters.value.get(execution_id)
+        if mech_value is None:
+            d[time_scale][mech].append(np.nan)
+        else:
+            d[time_scale][mech].append(mech_value[0])
+
 # Unit tests for each function of the Composition class #######################
 # Unit tests for Composition.Composition(
+
 
 class TestConstructor:
 
@@ -1127,18 +1141,6 @@ class TestCallBeforeAfterTimescale:
         assert pass_array == [0, 1, 2, 3]
 
     def test_call_beforeafter_values_onepass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value[0])
-
         comp = Composition()
 
         A = TransferMechanism(name="A [transfer]", function=Linear(slope=2.0))
@@ -1209,18 +1211,6 @@ class TestCallBeforeAfterTimescale:
                 np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
 
     def test_call_beforeafter_values_twopass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value[0])
-
         comp = Composition()
 
         A = IntegratorMechanism(name="A [transfer]", function=SimpleIntegrator(rate=1))
@@ -1664,18 +1654,6 @@ class TestSystemComposition:
         assert 125 == output[0][0]
 
     def test_call_beforeafter_values_onepass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value)
-
         comp = Composition()
 
         A = TransferMechanism(name="A [transfer]", function=Linear(slope=2.0))
@@ -1684,7 +1662,7 @@ class TestSystemComposition:
         comp.add_mechanism(B)
         comp.add_projection(A, MappingProjection(sender=A, receiver=B), B)
         comp._analyze_graph()
-        inputs_dict = {A: [[1],[ 2], [3], [4]]}
+        inputs_dict = {A: [[1], [2], [3], [4]]}
         sched = Scheduler(composition=comp)
 
         before = {}
@@ -1741,24 +1719,12 @@ class TestSystemComposition:
                 comp = []
                 for x in after[ts][mech]:
                     try:
-                        comp.append(x[0][0])
+                        comp.append(x[0])
                     except TypeError:
                         comp.append(x)
                 np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))
 
     def test_call_beforeafter_values_twopass(self):
-
-        def record_values(d, time_scale, *mechs):
-            if time_scale not in d:
-                d[time_scale] = {}
-            for mech in mechs:
-                if mech not in d[time_scale]:
-                    d[time_scale][mech] = []
-                if mech.value is None:
-                    d[time_scale][mech].append(np.nan)
-                else:
-                    d[time_scale][mech].append(mech.value)
-
         comp = Composition()
 
         A = IntegratorMechanism(name="A [transfer]", function=SimpleIntegrator(rate=1))
@@ -1848,7 +1814,7 @@ class TestSystemComposition:
                 comp = []
                 for x in after[ts][mech]:
                     try:
-                        comp.append(x[0][0])
+                        comp.append(x[0])
                     except TypeError:
                         comp.append(x)
                 np.testing.assert_allclose(comp, after_expected[ts][mech], err_msg='Failed on after[{0}][{1}]'.format(ts, mech))

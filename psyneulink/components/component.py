@@ -387,6 +387,7 @@ COMMENT
 """
 import copy
 import inspect
+import logging
 import numbers
 import types
 import warnings
@@ -409,7 +410,9 @@ __all__ = [
     'Component', 'COMPONENT_BASE_CLASS', 'component_keywords', 'ComponentError', 'ComponentLog',
     'DefaultsFlexibility', 'make_property', 'parameter_keywords', 'ParamsDict', 'ResetMode',
 ]
-# Testing pull request
+
+logger = logging.getLogger(__name__)
+
 component_keywords = {NAME, VARIABLE, VALUE, FUNCTION, FUNCTION_PARAMS, PARAMS, PREFS_ARG, CONTEXT}
 
 DeferredInitRegistry = {}
@@ -745,10 +748,11 @@ class Param(types.SimpleNamespace):
                 try:
                     return self.values[execution_id]
                 except KeyError:
-                    raise ComponentError('Param \'{0}\' has no value for execution_id {1}'.format(self.name, execution_id))
+                    logger.info('Param \'{0}\' has no value for execution_id {1}'.format(self.name, execution_id))
+                    return None
 
     def set(self, value, execution_context=None, override=False):
-        if self.read_only and not override:
+        if not override and self.read_only:
             raise ComponentError('Param \'{0}\' is read-only'.format(self.name))
         try:
             owning_component = self._owner._owner

@@ -60,6 +60,7 @@ from psyneulink.components.states.outputstate import OutputState
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import HARD_CLAMP, IDENTITY_MATRIX, NO_CLAMP, PULSE_CLAMP, SOFT_CLAMP
 from psyneulink.globals.socket import ConnectionInfo
+from psyneulink.globals.utilities import call_with_pruned_args
 from psyneulink.scheduling.condition import Always
 from psyneulink.scheduling.scheduler import Scheduler
 from psyneulink.scheduling.time import TimeScale
@@ -974,15 +975,19 @@ class Composition(object):
 
             call_before_time_step : callable
                 will be called before each `TIME_STEP` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             call_after_time_step : callable
                 will be called after each `TIME_STEP` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             call_before_pass : callable
                 will be called before each `PASS` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             call_after_pass : callable
                 will be called after each `PASS` is executed
+                will be passed the current *execution_id* (but it is not necessary for your callable to take)
 
             Returns
             ---------
@@ -1018,23 +1023,23 @@ class Composition(object):
         num = None
 
         if call_before_pass:
-            call_before_pass()
+            call_with_pruned_args(call_before_pass, execution_id=execution_id)
 
         for next_execution_set in execution_scheduler.run(termination_conds=termination_processing, execution_id=execution_id):
             if call_after_pass:
                 if next_pass_after == execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL):
                     logger.debug('next_pass_after {0}\tscheduler pass {1}'.format(next_pass_after, execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL)))
-                    call_after_pass()
+                    call_with_pruned_args(call_after_pass, execution_id=execution_id)
                     next_pass_after += 1
 
             if call_before_pass:
                 if next_pass_before == execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL):
-                    call_before_pass()
+                    call_with_pruned_args(call_before_pass, execution_id=execution_id)
                     logger.debug('next_pass_before {0}\tscheduler pass {1}'.format(next_pass_before, execution_scheduler.clocks[execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.TRIAL)))
                     next_pass_before += 1
 
             if call_before_time_step:
-                call_before_time_step()
+                call_with_pruned_args(call_before_time_step, execution_id=execution_id)
             # execute each mechanism with EXECUTING in context
             for mechanism in next_execution_set:
 
@@ -1096,10 +1101,10 @@ class Composition(object):
                                 self.input_CIM_output_states[input_state].value = 0
 
             if call_after_time_step:
-                call_after_time_step()
+                call_with_pruned_args(call_after_time_step, execution_id=execution_id)
 
         if call_after_pass:
-            call_after_pass()
+            call_with_pruned_args(call_after_pass, execution_id=execution_id)
 
         return num
 
@@ -1245,7 +1250,7 @@ class Composition(object):
 
             # Execute call before trial "hook" (user defined function)
             if call_before_trial:
-                call_before_trial()
+                call_with_pruned_args(call_before_trial, execution_id=execution_id)
 
             if scheduler_processing.termination_conds[TimeScale.RUN].is_satisfied(scheduler=scheduler_processing,
                                                                                   execution_id=execution_id):
@@ -1312,7 +1317,7 @@ class Composition(object):
             #                                   )
 
             if call_after_trial:
-                call_after_trial()
+                call_with_pruned_args(call_after_trial, execution_id=execution_id)
 
         scheduler_processing.clocks[execution_id]._increment_time(TimeScale.RUN)
         terminal_mechanisms = self.get_mechanisms_by_role(MechanismRole.TERMINAL)
