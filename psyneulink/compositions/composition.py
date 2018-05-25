@@ -350,7 +350,8 @@ class Composition(object):
         self.input_CIM_output_states = {}
         self.output_CIM = CompositionInterfaceMechanism(name="Output_CIM")
         self.output_CIM_output_states = {}
-        self.execution_ids = []
+        self.default_execution_id = self._get_unique_id()
+        self.execution_ids = [self.default_execution_id]
 
         self._scheduler_processing = None
         self._scheduler_learning = None
@@ -876,14 +877,13 @@ class Composition(object):
     def _assign_execution_ids(self, execution_id=None):
         '''
             assigns the same uuid to each Mechanism in the composition's processing graph as well as all input
-            mechanisms for this composition. The uuid is either specified in the user's call to run(), or generated
-            randomly at run time.
+            mechanisms for this composition. The uuid is either specified in the user's call to run(), or from
+            the Composition's **default_execution_id**
         '''
+        if execution_id is None:
+            execution_id = self.default_execution_id
 
         # Traverse processing graph and assign one uuid to all of its mechanisms
-        if execution_id is None:
-            execution_id = self._get_unique_id()
-
         if execution_id not in self.execution_ids:
             self.execution_ids.append(execution_id)
 
@@ -897,7 +897,7 @@ class Composition(object):
         self.input_CIM._execution_id = execution_id
         # self.target_CIM._execution_id = execution_id
 
-        self._execution_id = execution_id
+        self._current_execution_id = execution_id
         return execution_id
 
     def _identify_clamp_inputs(self, list_type, input_type, origins):
@@ -1002,7 +1002,6 @@ class Composition(object):
 
         self._assign_values_to_CIM_output_states(inputs)
         # self._assign_values_to_target_CIM_output_states(targets)
-        execution_id = self._assign_execution_ids(execution_id)
         next_pass_before = 1
         next_pass_after = 1
         if clamp_input:
@@ -1064,7 +1063,7 @@ class Composition(object):
                         for param in runtime_params[mechanism]:
                             if runtime_params[mechanism][param][1].is_satisfied(scheduler=execution_scheduler,
                                                # KAM 5/15/18 - not sure if this will always be the correct execution id:
-                                                                                execution_id=self._execution_id):
+                                                                                execution_id=execution_id):
                                 execution_runtime_params[param] = runtime_params[mechanism][param][0]
 
                     mechanism.context.execution_phase = ContextFlags.PROCESSING

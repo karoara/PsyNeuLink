@@ -405,7 +405,7 @@ class TestCondition:
                 scheduler_processing=sched,
                 termination_processing=termination_conds
             )
-            output = sched.execution_list[comp._execution_id]
+            output = sched.execution_list[comp.default_execution_id]
 
             expected_output = [A, A, A, A, set()]
             assert output == pytest.helpers.setify_expected_output(expected_output)
@@ -426,7 +426,7 @@ class TestCondition:
                 scheduler_processing=sched,
                 termination_processing=termination_conds
             )
-            output = sched.execution_list[comp._execution_id]
+            output = sched.execution_list[comp.default_execution_id]
 
             expected_output = [A, A, A, A]
             assert output == pytest.helpers.setify_expected_output(expected_output)
@@ -447,7 +447,7 @@ class TestCondition:
                 scheduler_processing=sched,
                 termination_processing=termination_conds
             )
-            output = sched.execution_list[comp._execution_id]
+            output = sched.execution_list[comp.default_execution_id]
 
             expected_output = [A, A, A, A, A]
             assert output == pytest.helpers.setify_expected_output(expected_output)

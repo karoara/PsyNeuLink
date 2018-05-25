@@ -1095,7 +1095,7 @@ class TestCallBeforeAfterTimescale:
 
             def record_timestep():
 
-                arr.append(scheduler.clocks[comp._execution_id].get_total_times_relative(TimeScale.TIME_STEP, TimeScale.TRIAL))
+                arr.append(scheduler.clocks[comp.default_execution_id].get_total_times_relative(TimeScale.TIME_STEP, TimeScale.TRIAL))
 
             return record_timestep
 
@@ -1103,7 +1103,7 @@ class TestCallBeforeAfterTimescale:
 
             def record_pass():
 
-                arr.append(scheduler.clocks[comp._execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.RUN))
+                arr.append(scheduler.clocks[comp.default_execution_id].get_total_times_relative(TimeScale.PASS, TimeScale.RUN))
 
             return record_pass
 
@@ -1111,7 +1111,7 @@ class TestCallBeforeAfterTimescale:
 
             def record_trial():
 
-                arr.append(scheduler.clocks[comp._execution_id].get_total_times_relative(TimeScale.TRIAL, TimeScale.LIFE))
+                arr.append(scheduler.clocks[comp.default_execution_id].get_total_times_relative(TimeScale.TRIAL, TimeScale.LIFE))
 
             return record_trial
 
