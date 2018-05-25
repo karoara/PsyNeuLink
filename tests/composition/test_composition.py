@@ -2681,7 +2681,7 @@ class TestCompositionInterface:
 
         assert np.allclose(A.input_states[0].value, [2.])
         assert np.allclose(A.input_states[1].value, [4.])
-        assert np.allclose(A.variable, [[2.], [4.]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
         assert np.allclose(output, [[5.], [5.]])
         assert np.allclose(output2, [[2.], [4.]])
 
@@ -2722,7 +2722,7 @@ class TestCompositionInterface:
         )
         assert np.allclose(A.input_states[0].value, [5.])
         assert np.allclose(A.input_states[1].value, [5.])
-        assert np.allclose(A.variable, [[5.], [5.]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[5.], [5.]])
         assert np.allclose(output, [[50.]])
 
         # A --> B --> C
@@ -2753,11 +2753,11 @@ class TestCompositionInterface:
         )
         assert np.allclose(A.input_states[0].value, [2.])
         assert np.allclose(A.input_states[1].value, [4.])
-        assert np.allclose(A.variable, [[2.], [4.]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
 
         assert np.allclose(D.input_states[0].value, [2.])
         assert np.allclose(D.input_states[1].value, [4.])
-        assert np.allclose(D.variable, [[2.], [4.]])
+        assert np.allclose(D.parameters.variable.get(comp.default_execution_id), [[2.], [4.]])
 
         assert np.allclose(output2, [[40]])
 
@@ -2861,7 +2861,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_first_with_deferred_init(self):
         comp = Composition()
@@ -2897,7 +2897,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_with_keyword(self):
         comp = Composition()
@@ -2926,7 +2926,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
         assert 2 == output[0][0]
 
@@ -2958,7 +2958,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
     def test_two_input_states_created_with_values(self):
         comp = Composition()
@@ -2987,7 +2987,7 @@ class TestInputStateSpecifications:
 
         assert np.allclose(A.input_states[0].value, [2.0])
         assert np.allclose(A.input_states[1].value, [4.0])
-        assert np.allclose(A.variable, [[2.0], [4.0]])
+        assert np.allclose(A.parameters.variable.get(comp.default_execution_id), [[2.0], [4.0]])
 
 
 class TestInputSpecifications:
