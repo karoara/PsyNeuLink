@@ -839,7 +839,7 @@ class RecurrentTransferMechanism(TransferMechanism):
                                            format(self.__class__.__name__, self.name))
 
         if self.has_recurrent_input_state:
-            self._linear_combin_func = LinearCombination(default_variable=self.variable)
+            self._linear_combin_func = LinearCombination(default_variable=self.instance_defaults.variable)
 
         if self.auto is None and self.hetero is None:
             self.matrix = get_matrix(self.params[MATRIX], self.size[0], self.size[0])
