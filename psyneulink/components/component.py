@@ -1973,7 +1973,7 @@ class Component(object, metaclass=ComponentsMeta):
         elif runtime_params:    # not None
             raise ComponentError("Invalid specification of runtime parameters for {}".format(self.name))
 
-        self.parameters.variable.set(variable, execution_id=execution_id, override=True)
+        self.parameters.variable.set(variable, execution_context=execution_id, override=True)
         return variable
 
     def _instantiate_defaults(self,
