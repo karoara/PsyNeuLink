@@ -2655,7 +2655,7 @@ class System(System_Base):
         # sorted_list = list(object_item[0].name for object_item in self.execution_list)
 
         # Execute system without learning on projections (that will be taken care of in _execute_learning()
-        self._execute_processing(runtime_params=runtime_params, context=context)
+        self._execute_processing(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
         # EXECUTE LEARNING FOR EACH PROCESS
 
@@ -2664,7 +2664,7 @@ class System(System_Base):
             self.context.execution_phase = ContextFlags.LEARNING
             self.context.string = self.context.string.replace(EXECUTING, LEARNING + ' ')
 
-            self._execute_learning(context)
+            self._execute_learning(execution_id=execution_id, context=context)
 
             self.context.execution_phase = ContextFlags.IDLE
             self.context.string = self.context.string.replace(LEARNING, EXECUTING)
@@ -2679,6 +2679,7 @@ class System(System_Base):
             self.controller.context.execution_phase = ContextFlags.PROCESSING
             try:
                 self.controller.execute(
+                    execution_id=execution_id,
                     runtime_params=None,
                     context=context
                 )
@@ -2697,7 +2698,7 @@ class System(System_Base):
 
         return self.terminal_mechanisms.outputStateValues
 
-    def _execute_processing(self, runtime_params, context=None):
+    def _execute_processing(self, runtime_params, execution_id=None, context=None):
         # Execute each Mechanism in self.execution_list, in the order listed during its phase
         # Only update Mechanism on time_step(s) determined by its phaseSpec (specified in Mechanism's Process entry)
         # FIX: NEED TO IMPLEMENT FRACTIONAL UPDATES (IN Mechanism.update())
@@ -2706,7 +2707,7 @@ class System(System_Base):
             raise SystemError('System.py:_execute_processing - {0}\'s scheduler is None, '
                               'must be initialized before execution'.format(self.name))
         logger.debug('{0}.scheduler processing termination conditions: {1}'.format(self, self.termination_processing))
-        for next_execution_set in self.scheduler_processing.run(termination_conds=self.termination_processing):
+        for next_execution_set in self.scheduler_processing.run(execution_id=execution_id, termination_conds=self.termination_processing):
             logger.debug('Running next_execution_set {0}'.format(next_execution_set))
             i = 0
             for mechanism in next_execution_set:
@@ -2727,7 +2728,7 @@ class System(System_Base):
                             execution_runtime_params[param] = runtime_params[mechanism][param][0]
 
                 mechanism.context.execution_phase = ContextFlags.PROCESSING
-                mechanism.execute(runtime_params=execution_runtime_params, context=context)
+                mechanism.execute(execution_id=execution_id, runtime_params=execution_runtime_params, context=context)
                 for key in mechanism._runtime_params_reset:
                     mechanism._set_parameter_value(key, mechanism._runtime_params_reset[key])
                 mechanism._runtime_params_reset = {}
@@ -2766,7 +2767,7 @@ class System(System_Base):
                 pass
             i += 1
 
-    def _execute_learning(self, context=None):
+    def _execute_learning(self, execution_id=None, context=None):
         # Execute each LearningMechanism as well as LearningProjections in self.learning_execution_list
 
         # FIRST, if targets were specified as a function, call the function now
@@ -2800,7 +2801,7 @@ class System(System_Base):
             raise SystemError('System.py:_execute_learning - {0}\'s scheduler is None, '
                               'must be initialized before execution'.format(self.name))
         logger.debug('{0}.scheduler learning termination conditions: {1}'.format(self, self.termination_learning))
-        for next_execution_set in self.scheduler_learning.run(termination_conds=self.termination_learning):
+        for next_execution_set in self.scheduler_learning.run(execution_id=execution_id, termination_conds=self.termination_learning):
             logger.debug('Running next_execution_set {0}'.format(next_execution_set))
             for component in next_execution_set:
                 logger.debug('\tRunning component {0}'.format(component))
@@ -2830,7 +2831,7 @@ class System(System_Base):
                 component.context.string = context_str
 
                 # Note:  DON'T include input arg, as that will be resolved by mechanism from its sender projections
-                component.execute(runtime_params=params, context=context)
+                component.execute(execution_id=execution_id, runtime_params=params, context=context)
 
                 component.context.execution_phase = ContextFlags.IDLE
 
@@ -2838,7 +2839,7 @@ class System(System_Base):
                 # print ("EXECUTING LEARNING UPDATES: ", component.name)
 
         # THEN update all MappingProjections
-        for next_execution_set in self.scheduler_learning.run(termination_conds=self.termination_learning):
+        for next_execution_set in self.scheduler_learning.run(execution_id=execution_id, termination_conds=self.termination_learning):
             logger.debug('Running next_execution_set {0}'.format(next_execution_set))
             for component in next_execution_set:
                 logger.debug('\tRunning component {0}'.format(component))

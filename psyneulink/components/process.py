@@ -2163,7 +2163,7 @@ class Process(Process_Base):
 
         # Execute LearningMechanisms
         if self._learning_enabled:
-            self._execute_learning(target=target, context=context)
+            self._execute_learning(execution_id=execution_id, target=target, context=context)
 
         if report_output:
             self._report_process_completion(separator=True)
@@ -2172,7 +2172,7 @@ class Process(Process_Base):
         return self.output_state.value
         # return self.output
 
-    def _execute_learning(self, target=None, context=None):
+    def _execute_learning(self, execution_id=None, target=None, context=None):
 
         """ Update each LearningProjection for mechanisms in _mechs of process
 
@@ -2216,7 +2216,7 @@ class Process(Process_Base):
 
         for mechanism in self._learning_mechs:
             mechanism.context.execution_phase = ContextFlags.LEARNING
-            mechanism.execute(context=context)
+            mechanism.execute(execution_id=execution_id, context=context)
             mechanism.context.execution_phase = ContextFlags.IDLE
 
         # FINALLY, execute LearningProjections to MappingProjections in the process' pathway
