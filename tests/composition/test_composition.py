@@ -2469,6 +2469,28 @@ class TestNestedCompositions:
         assert 16 == output[0][0]
 
 
+class TestOverloadedCompositions:
+    def test_mechanism_different_inputs(self):
+        a = TransferMechanism(name='a')
+        b = TransferMechanism(name='b')
+        c = TransferMechanism(name='c')
+
+        comp = Composition()
+        comp2 = Composition()
+
+        comp.add_mechanism(a)
+        comp.add_mechanism(b)
+        comp.add_projection(a, MappingProjection(sender=a, receiver=b), b)
+
+        comp2.add_mechanism(a)
+        comp2.add_mechanism(b)
+        comp2.add_mechanism(c)
+        comp2.add_projection(a, MappingProjection(sender=a, receiver=b), b)
+        comp2.add_projection(c, MappingProjection(sender=c, receiver=b), b)
+
+        comp.run({a: 5})
+
+
 class TestCompositionInterface:
 
     def test_one_input_state_per_origin_two_origins(self):
