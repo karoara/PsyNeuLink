@@ -2093,6 +2093,14 @@ class State_Base(State):
     def all_afferents(self):
         return self.path_afferents + self.mod_afferents
 
+    @property
+    def afferents_info(self):
+        try:
+            return self._afferents_info
+        except AttributeError:
+            self._afferents_info = {}
+            return self._afferents_info
+
     def _assign_default_state_name(self, context=None):
         return False
 
