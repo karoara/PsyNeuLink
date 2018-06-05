@@ -919,6 +919,12 @@ class Projection_Base(Projection):
         raise ProjectionError("PROGRAM ERROR: {} must implement _assign_default_projection_name().".
                               format(self.__class__.__name__))
 
+    def _assign_context_values(self, execution_id, **kwargs):
+        for parameter_state in self.parameter_states:
+            parameter_state._assign_context_values(execution_id, **kwargs)
+
+        super()._assign_context_values(execution_id, **kwargs)
+
     @property
     def parameter_states(self):
         return self._parameter_states

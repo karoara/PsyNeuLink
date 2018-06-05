@@ -770,7 +770,7 @@ class Param(types.SimpleNamespace):
 
     def _initialize_from_context(self, execution_context=None, base_execution_context=None):
         try:
-            self.set(value=copy.deepcopy(self.get(base_execution_context)), execution_context=base_execution_context, override=True)
+            self.set(value=copy.deepcopy(self.get(base_execution_context)), execution_context=execution_context, override=True)
         except ComponentError as e:
             raise ComponentError('Error when attempting to initialize from {0}: {1}'.format(base_execution_context, e))
 
@@ -2362,6 +2362,16 @@ class Component(object, metaclass=ComponentsMeta):
         elif mode == ResetMode.ALL_TO_CLASS_DEFAULTS:
             self.params_current = self.paramClassDefaults.copy()
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
+
+    def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
+        try:
+            context_param = self.parameters.context.get(execution_id)
+        except ComponentError:
+            self.parameters.context._initialize_from_context(execution_id, base_execution_id)
+            context_param = self.parameters.context.get(execution_id)
+
+        for context_item, value in kwargs.items():
+            setattr(context_param, context_item, value)
 
     # ------------------------------------------------------------------------------------------------------------------
     # Parsing methods
