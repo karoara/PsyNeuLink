@@ -348,6 +348,7 @@ class Composition(object):
         self.graph = Graph()  # Graph of the Composition
         self._graph_processing = None
         self.mechanisms = []
+        self.projections = []
         self.input_CIM = CompositionInterfaceMechanism(name="Stimulus_CIM")
         self.input_CIM_output_states = {}
         self.output_CIM = CompositionInterfaceMechanism(name="Output_CIM")
@@ -476,6 +477,7 @@ class Composition(object):
             projection.is_processing = False
             projection.name = '{0} to {1}'.format(sender, receiver)
             self.graph.add_component(projection)
+            self.projections.append(projection)
 
             # Add connections between mechanisms and the projection
             self.graph.connect_components(sender, projection)
@@ -887,21 +889,15 @@ class Composition(object):
         if execution_id is None:
             execution_id = self.default_execution_id
 
-        # Traverse processing graph and assign one uuid to all of its mechanisms
         if execution_id not in self.execution_ids:
             self.execution_ids.append(execution_id)
 
-        for v in self._graph_processing.vertices:
-            v.component._execution_id = execution_id
+        for mech in self.mechanisms:
+            mech._assign_context_values(execution_id, composition=self)
 
-        # Assign the uuid to all input mechanisms
-        # for k in self.input_mechanisms.keys():
-        #     self.input_mechanisms[k]._execution_id = execution_id
+        for proj in self.projections:
+            proj._assign_context_values(execution_id, composition=self)
 
-        self.input_CIM._execution_id = execution_id
-        # self.target_CIM._execution_id = execution_id
-
-        self._current_execution_id = execution_id
         return execution_id
 
     def _identify_clamp_inputs(self, list_type, input_type, origins):
