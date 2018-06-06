@@ -1934,10 +1934,10 @@ class Component(object, metaclass=ComponentsMeta):
         # Validate variable if parameter_validation is set and the function was called with a variable
         # IMPLEMENTATION NOTE:  context is used here just for reporting;  it is not tested in any of the methods called
         if self.prefs.paramValidationPref and variable is not None:
-            if self.context.string:
-                self.context.string = self.context.string + SEPARATOR_BAR + FUNCTION_CHECK_ARGS
+            if self.parameters.context.get(execution).string:
+                self.parameters.context.get(execution).string = self.parameters.context.get(execution).string + SEPARATOR_BAR + FUNCTION_CHECK_ARGS
             else:
-                self.context.string = FUNCTION_CHECK_ARGS
+                self.parameters.context.get(execution).string = FUNCTION_CHECK_ARGS
             variable = self._validate_variable(variable, context=context)
 
         # PARAMS ------------------------------------------------------------
