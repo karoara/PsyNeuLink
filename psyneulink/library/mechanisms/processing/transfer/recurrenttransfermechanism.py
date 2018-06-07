@@ -171,26 +171,22 @@ from collections import Iterable
 import numpy as np
 import typecheck as tc
 
-from psyneulink.components.functions.function import Hebbian, Linear, LinearCombination,\
-    Stability, get_matrix, is_function_type
-from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import \
-    ACTIVATION_INPUT, LEARNING_SIGNAL, LearningMechanism
+from psyneulink.components.functions.function import Hebbian, Linear, LinearCombination, Stability, get_matrix, is_function_type
+from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import ACTIVATION_INPUT, LEARNING_SIGNAL, LearningMechanism
 from psyneulink.components.mechanisms.mechanism import Mechanism_Base
 from psyneulink.components.mechanisms.processing.transfermechanism import TransferMechanism
 from psyneulink.components.projections.modulatory.learningprojection import LearningProjection
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
-from psyneulink.components.states.outputstate import PRIMARY, StandardOutputStates
 from psyneulink.components.states.inputstate import InputState
+from psyneulink.components.states.outputstate import PRIMARY, StandardOutputStates
 from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.components.states.state import _instantiate_state
-from psyneulink.globals.keywords import \
-    AUTO, ENERGY, ENTROPY, HETERO, HOLLOW_MATRIX, MATRIX, MEAN, MEDIAN, NAME, \
-    PARAMS_CURRENT, RECURRENT_TRANSFER_MECHANISM, RESULT, STANDARD_DEVIATION, VARIANCE
 from psyneulink.globals.context import ContextFlags
+from psyneulink.globals.keywords import AUTO, ENERGY, ENTROPY, HETERO, HOLLOW_MATRIX, MATRIX, MEAN, MEDIAN, NAME, PARAMS_CURRENT, RECURRENT_TRANSFER_MECHANISM, RESULT, STANDARD_DEVIATION, VARIANCE
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import is_numeric_or_none, parameter_spec
-from psyneulink.library.mechanisms.adaptive.learning.autoassociativelearningmechanism import \
-    AutoAssociativeLearningMechanism
+from psyneulink.library.mechanisms.adaptive.learning.autoassociativelearningmechanism import AutoAssociativeLearningMechanism
 
 __all__ = [
     'DECAY', 'RECURRENT_OUTPUT', 'RecurrentTransferError', 'RecurrentTransferMechanism',
@@ -884,13 +880,13 @@ class RecurrentTransferMechanism(TransferMechanism):
             else:
                 del self.output_states[ENTROPY]
 
-    def _update_parameter_states(self, runtime_params=None, context=None):
+    def _update_parameter_states(self, execution_id=None, runtime_params=None, context=None):
         for state in self._parameter_states:
             # (8/2/17 CW) because the auto and hetero params are solely used by the AutoAssociativeProjection
             # (the RecurrentTransferMechanism doesn't use them), the auto and hetero param states are updated in the
             # projection's _update_parameter_states, and accordingly are not updated here
             if state.name != AUTO or state.name != HETERO:
-                state.update(params=runtime_params, context=context)
+                state.update(execution_id=execution_id, params=runtime_params, context=context)
 
     # 8/2/17 CW: this property is not optimal for performance: if we want to optimize performance we should create a
     # single flag to check whether to get matrix from auto and hetero?
@@ -1015,14 +1011,19 @@ class RecurrentTransferMechanism(TransferMechanism):
             new_input_state = InputState(owner=self, name="Recurrent Input State", variable=self.variable[0])
             assert (len(new_input_state.all_afferents) == 0)  # just a sanity check
             assert(self.input_state.name != "Recurrent Input State")
-            return AutoAssociativeProjection(owner=mech,
+            proj = AutoAssociativeProjection(owner=mech,
                                              receiver=new_input_state,
                                              matrix=matrix,
                                              name=mech.name + ' recurrent projection')
+            receiver = new_input_state
+        else:
+            proj = AutoAssociativeProjection(owner=mech,
+                                             matrix=matrix,
+                                             name=mech.name + ' recurrent projection')
+            receiver = self.input_state
 
-        return AutoAssociativeProjection(owner=mech,
-                                         matrix=matrix,
-                                         name=mech.name + ' recurrent projection')
+        proj._enable_for_compositions(ConnectionInfo.ALL)
+        return proj
 
     # IMPLEMENTATION NOTE: THIS SHOULD BE MOVED TO COMPOSITION WHEN THAT IS IMPLEMENTED
     def _instantiate_learning_mechanism(self,
@@ -1041,14 +1042,16 @@ class RecurrentTransferMechanism(TransferMechanism):
                                                                       self.name))
 
         # Instantiate Projection from Mechanism's output to LearningMechanism
-        MappingProjection(sender=activity_vector,
+        mproj = MappingProjection(sender=activity_vector,
                           receiver=learning_mechanism.input_states[ACTIVATION_INPUT],
                           name="Error Projection for {}".format(learning_mechanism.name))
+        mproj._enable_for_all_compositions()
 
         # Instantiate Projection from LearningMechanism to Mechanism's AutoAssociativeProjection
-        LearningProjection(sender=learning_mechanism.output_states[LEARNING_SIGNAL],
+        lproj = LearningProjection(sender=learning_mechanism.output_states[LEARNING_SIGNAL],
                            receiver=matrix.parameter_states[MATRIX],
                            name="{} for {}".format(LearningProjection.className, self.recurrent_projection.name))
+        lproj._enable_for_all_compositions()
 
         return learning_mechanism
 

@@ -1052,7 +1052,7 @@ class LearningMechanism(AdaptiveMechanism_Base):
         if self.error_sources:
             self.error_matrices = [None] * len(self.error_sources)
             for i, error_source in enumerate(self.error_sources):
-                _instantiate_error_signal_projection(sender=error_source, receiver=self)
+                self.error_signal_projection = _instantiate_error_signal_projection(sender=error_source, receiver=self)
                 if isinstance(error_source, ObjectiveMechanism):
                     self.error_matrices[i] = np.identity(len(error_source.input_states[SAMPLE].value))
                 else:

@@ -739,14 +739,14 @@ import numpy as np
 import typecheck as tc
 
 from psyneulink.components.component import Component, ComponentError, DefaultsFlexibility, component_keywords, function_type, method_type
-from psyneulink.components.functions.function import CombinationFunction, Function, Linear, LinearCombination, \
-    ModulationParam, _get_modulated_param, get_param_value_for_keyword
+from psyneulink.components.functions.function import CombinationFunction, Function, Linear, LinearCombination, ModulationParam, _get_modulated_param, get_param_value_for_keyword
 from psyneulink.components.shellclasses import Mechanism, Process_Base, Projection, State
 from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMMAND_LINE, CONTEXT, CONTROL_PROJECTION_PARAMS, CONTROL_SIGNAL_SPECS, DEFERRED_INITIALIZATION, EXPONENT, FUNCTION, FUNCTION_PARAMS, GATING_PROJECTION_PARAMS, GATING_SIGNAL_SPECS, INITIALIZING, INPUT_STATES, LEARNING_PROJECTION_PARAMS, LEARNING_SIGNAL_SPECS, MAPPING_PROJECTION_PARAMS, MATRIX, MECHANISM, MODULATORY_PROJECTIONS, MODULATORY_SIGNAL, NAME, OUTPUT_STATES, OWNER, PARAMETER_STATES, PARAMS, PATHWAY_PROJECTIONS, PREFS_ARG, PROJECTIONS, PROJECTION_PARAMS, PROJECTION_TYPE, RECEIVER, REFERENCE_VALUE, REFERENCE_VALUE_NAME, SENDER, STANDARD_OUTPUT_STATES, STATE, STATE_CONTEXT, STATE_NAME, STATE_PARAMS, STATE_PREFS, STATE_TYPE, STATE_VALUE, VALUE, VARIABLE, WEIGHT, kwStateComponentCategory
 from psyneulink.globals.preferences.componentpreferenceset import kpVerbosePref
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import ContentAddressableList, MODULATION_OVERRIDE, Modulation, convert_all_elements_to_np_array, convert_to_np_array, get_args, get_class_attributes, is_value_spec, iscompatible, merge_param_dicts, type_match
 
 __all__ = [
@@ -1359,6 +1359,9 @@ class State_Base(State):
         if not isinstance(projection_list, list):
             projection_list = [projection_list]
 
+        # return a list of the newly created projections
+        new_projections = []
+
         # Parse each Projection specification in projection_list using self as connectee_state:
         # - calls _parse_projection_spec for each projection_spec in list
         # - validates that Projection specification is compatible with its sender and self
@@ -1409,6 +1412,7 @@ class State_Base(State):
                                      format(projection_type.__name__, self.name, self.owner.name, proj_receiver.name))
                 projection.init_args[RECEIVER] = self
 
+
                 # parse/validate sender
                 if proj_sender:
                     # If the Projection already has State as its sender,
@@ -1436,6 +1440,10 @@ class State_Base(State):
                 else:
                     sender = state
                 projection.init_args[SENDER] = sender
+
+                projection.sender = sender
+                projection.receiver = projection.init_args[RECEIVER]
+                projection.receiver.afferents_info[projection] = ConnectionInfo()
 
                 # Construct and assign name
                 if isinstance(sender, State):
@@ -1508,6 +1516,7 @@ class State_Base(State):
                 projs = self.path_afferents
                 variable = self.instance_defaults.variable
                 projs.append(projection)
+                new_projections.append(projection)
                 if len(projs) > 1:
                     # KDM 5/16/18: Why are we casting this to 2d? I expect this to make the input state variable
                     # 2d, so its owner's 3d, but that does not appear to be happening.
@@ -1537,6 +1546,9 @@ class State_Base(State):
 
             elif isinstance(projection, ModulatoryProjection_Base) and not projection in self.mod_afferents:
                 self.mod_afferents.append(projection)
+                new_projections.append(projection)
+
+        return new_projections
 
     def _instantiate_projection_from_state(self, projection_spec, receiver=None, context=None):
         """Instantiate outgoing projection from a State and assign it to self.efferents
@@ -1857,8 +1869,8 @@ class State_Base(State):
     """
 
         # Set context to owner's context:
-        self.context.execution_phase = self.owner.context.execution_phase
-        self.context.string = self.owner.context.string
+        self.parameters.context.get(execution_id).execution_phase = self.owner.parameters.context.get(execution_id).execution_phase
+        self.parameters.context.get(execution_id).string = self.owner.parameters.context.get(execution_id).string
 
         # SET UP ------------------------------------------------------------------------------------------------
 
@@ -1902,21 +1914,6 @@ class State_Base(State):
         from psyneulink.components.projections.modulatory.controlprojection import ControlProjection
         from psyneulink.components.projections.modulatory.gatingprojection import GatingProjection
 
-        # If owner is a Mechanism, get its execution_id
-        if isinstance(self.owner, (Mechanism, Process_Base)):
-            self_id = self.owner._execution_id
-        # If owner is a MappingProjection, get it's sender's execution_id
-        elif isinstance(self.owner, MappingProjection):
-            try:
-                self_id = self.owner.sender.owner._execution_id
-            # If there is no execution_id (e.g., MappingProjection is from an SystemInputState), don't update State
-            except AttributeError:
-                return
-        else:
-            raise StateError("PROGRAM ERROR: Object ({}) of type {} has a {}, but this is only allowed for "
-                             "Mechanisms and MappingProjections".
-                             format(self.owner.name, self.owner.__class__.__name__, self.__class__.__name__,))
-
         modulatory_override = False
 
         # Get values of all Projections
@@ -1938,13 +1935,8 @@ class State_Base(State):
                                                                                      self.owner.name))
                 continue
 
-            sender_id = sender.owner._execution_id
-            if isinstance(sender.owner, Mechanism):
-                if (not sender.owner.ignore_execution_id) and (sender_id != self_id):
-                    continue
-            else:
-                if sender_id != self_id:
-                    continue
+            if not self.afferents_info[projection].is_active_in_composition(self.parameters.context.get(execution_id).composition):
+                continue
 
             # Only accept projections from a Process to which the owner Mechanism belongs
             if isinstance(sender, ProcessInputState):
@@ -1965,16 +1957,20 @@ class State_Base(State):
 
             # Update LearningSignals only if context == LEARNING;  otherwise, assign zero for projection_value
             # Note: done here rather than in its own method in order to exploit parsing of params above
-            if isinstance(projection, LearningProjection) and self.context.execution_phase != ContextFlags.LEARNING:
+            if isinstance(projection, LearningProjection) and self.parameters.context.get(execution_id).execution_phase != ContextFlags.LEARNING:
                 projection_value = projection.value * 0.0
             else:
                 projection_value = projection.execute(variable=projection.sender.value,
+                                                      execution_id=execution_id,
                                                       runtime_params=projection_params,
                                                       context=context)
 
             # If this is initialization run and projection initialization has been deferred, pass
-            if projection.context.initialization_status == ContextFlags.DEFERRED_INIT:
-                continue
+            try:
+                if projection.parameters.context.get(execution_id).initialization_status == ContextFlags.DEFERRED_INIT:
+                    continue
+            except AttributeError:
+                pass
 
             if isinstance(projection, PathwayProjection_Base):
                 # Add projection_value to list of PathwayProjection values (for aggregation below)

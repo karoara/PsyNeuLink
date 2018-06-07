@@ -318,6 +318,7 @@ from psyneulink.globals.defaults import defaultControlAllocation
 from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMMAND_LINE, CONTROL, CONTROL_PROJECTION, CONTROL_PROJECTIONS, CONTROL_SIGNAL, CONTROL_SIGNALS, EXPONENT, INIT__EXECUTE__METHOD_ONLY, NAME, OBJECTIVE_MECHANISM, OWNER_VALUE, PRODUCT, PROJECTIONS, PROJECTION_TYPE, SYSTEM, VARIABLE, WEIGHT
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import ContentAddressableList
 
 __all__ = [
@@ -574,6 +575,10 @@ class ControlMechanism(AdaptiveMechanism_Base):
                                                     function=function,
                                                     prefs=prefs,
                                                     context=ContextFlags.CONSTRUCTOR)
+
+        if system is not None:
+            for eff in self.efferents:
+                eff._enable_for_compositions(system)
 
         try:
             self.monitored_output_states

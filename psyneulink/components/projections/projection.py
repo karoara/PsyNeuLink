@@ -396,6 +396,7 @@ from psyneulink.globals.context import ContextFlags
 from psyneulink.globals.keywords import CONTEXT, CONTROL, CONTROL_PROJECTION, CONTROL_SIGNAL, EXPONENT, GATING, GATING_PROJECTION, GATING_SIGNAL, INPUT_STATE, LEARNING, LEARNING_PROJECTION, LEARNING_SIGNAL, MAPPING_PROJECTION, MATRIX, MATRIX_KEYWORD_SET, MECHANISM, NAME, OUTPUT_STATE, OUTPUT_STATES, PARAMETER_STATE_PARAMS, PARAMS, PATHWAY, PROJECTION, PROJECTION_PARAMS, PROJECTION_SENDER, PROJECTION_TYPE, RECEIVER, SENDER, STANDARD_ARGS, STATE, STATES, WEIGHT, kwAddInputState, kwAddOutputState, kwProjectionComponentCategory
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import ContentAddressableList, is_matrix, is_numeric, type_match
 
 __all__ = [
@@ -707,6 +708,9 @@ class Projection_Base(Projection):
                       format(self.receiver.owner.name, self.name))
             self.receiver = self.receiver.input_state
 
+        if self not in self.receiver.afferents_info:
+            self.receiver.afferents_info[self] = ConnectionInfo()
+
        # Validate variable, function and params, and assign params to paramInstanceDefaults
         # Note: pass name of Projection (to override assignment of componentName in super.__init__)
         super(Projection_Base, self).__init__(default_variable=variable,
@@ -844,10 +848,10 @@ class Projection_Base(Projection):
         else:
             raise ProjectionError("Unrecognized receiver specification ({0}) for {1}".format(self.receiver, self.name))
 
-    def _update_parameter_states(self, runtime_params=None, context=None):
+    def _update_parameter_states(self, execution_id=None, runtime_params=None, context=None):
         for state in self._parameter_states:
             state_name = state.name
-            state.update(params=runtime_params, context=context)
+            state.update(execution_id=execution_id, params=runtime_params, context=context)
 
             # # Assign ParameterState's value to parameter value in runtime_params
             # if runtime_params and state_name in runtime_params[PARAMETER_STATE_PARAMS]:
@@ -897,6 +901,21 @@ class Projection_Base(Projection):
         )
         self.context.execution_phase = ContextFlags.IDLE
         return self.value
+
+    def _enable_for_compositions(self, composition):
+        try:
+            self.receiver.afferents_info[self].add_composition(composition)
+        except KeyError:
+            self.receiver.afferents_info[self] = ConnectionInfo(compositions=composition)
+
+        try:
+            composition._add_projection(self)
+        except AttributeError:
+            # composition may be ALL or None, in this case we don't need to add
+            pass
+
+    def _enable_for_all_compositions(self):
+        self._enable_for_compositions(ConnectionInfo.ALL)
 
     # FIX: 10/3/17 - replace with @property on Projection for receiver and sender
     @property
@@ -1873,13 +1892,11 @@ def _add_projection_to(receiver, state, projection_spec, context=None):
 
     # state is State object, so use thatParameterState
     if isinstance(state, State_Base):
-        state._instantiate_projections_to_state(projections=projection_spec, context=context)
-        return
+        return state._instantiate_projections_to_state(projections=projection_spec, context=context)
 
     # Generic INPUT_STATE is specified, so use (primary) InputState
     elif state is INPUT_STATE:
-        receiver.input_state._instantiate_projections_to_state(projections=projection_spec, context=context)
-        return
+        return receiver.input_state._instantiate_projections_to_state(projections=projection_spec, context=context)
 
     # input_state is index into input_states OrderedDict, so get corresponding key and assign to input_state
     elif isinstance(state, int):
@@ -1896,7 +1913,7 @@ def _add_projection_to(receiver, state, projection_spec, context=None):
     #    so try as key in input_states OrderedDict (i.e., as name of an InputState)
     if isinstance(state, str):
         try:
-            receiver.input_state[state]._instantiate_projections_to_state(projections=projection_spec, context=context)
+            return receiver.input_state[state]._instantiate_projections_to_state(projections=projection_spec, context=context)
         except KeyError:
             pass
         else:
@@ -1939,7 +1956,7 @@ def _add_projection_to(receiver, state, projection_spec, context=None):
                                                        list=[input_state],
                                                        name=receiver.name+'.input_states')
 
-    input_state._instantiate_projections_to_state(projections=projection_spec, context=context)
+    return input_state._instantiate_projections_to_state(projections=projection_spec, context=context)
 
 
 # IMPLEMENTATION NOTE:  THIS SHOULD BE MOVED TO COMPOSITION ONCE THAT IS IMPLEMENTED

@@ -441,11 +441,9 @@ from toposort import toposort, toposort_flatten
 from psyneulink.components.component import Component, Param
 from psyneulink.components.mechanisms.adaptive.control.controlmechanism import ControlMechanism, OBJECTIVE_MECHANISM
 from psyneulink.components.mechanisms.adaptive.learning.learningauxiliary import _assign_error_signal_projections, _get_learning_mechanisms
-from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import LearningMechanism, ERROR_SIGNAL
+from psyneulink.components.mechanisms.adaptive.learning.learningmechanism import ERROR_SIGNAL, LearningMechanism
 from psyneulink.components.mechanisms.mechanism import MechanismList
-from psyneulink.components.mechanisms.processing.objectivemechanism import \
-    DEFAULT_MONITORED_STATE_EXPONENT, DEFAULT_MONITORED_STATE_MATRIX, DEFAULT_MONITORED_STATE_WEIGHT, OUTCOME, \
-    ObjectiveMechanism
+from psyneulink.components.mechanisms.processing.objectivemechanism import DEFAULT_MONITORED_STATE_EXPONENT, DEFAULT_MONITORED_STATE_MATRIX, DEFAULT_MONITORED_STATE_WEIGHT, OUTCOME, ObjectiveMechanism
 from psyneulink.components.process import Process, ProcessList, ProcessTuple
 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
 from psyneulink.components.projections.projection import Projection
@@ -453,16 +451,15 @@ from psyneulink.components.shellclasses import Mechanism, Process_Base, System_B
 from psyneulink.components.states.inputstate import InputState
 from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.globals.context import ContextFlags
-from psyneulink.globals.keywords import ALL, COMPONENT_INIT, CONROLLER_PHASE_SPEC, CONTROL, CONTROLLER, CYCLE, \
-    EXECUTING, FUNCTION, FUNCTIONS, INITIALIZE_CYCLE, INITIALIZING, INITIAL_VALUES, \
-    INTERNAL, LABELS, LEARNING, MATRIX, MONITOR_FOR_CONTROL, ORIGIN, PROJECTIONS, ROLES, SAMPLE, SINGLETON, SYSTEM, \
-    SYSTEM_INIT, TARGET, TERMINAL, VALUES, kwSeparator, kwSystemComponentCategory
+from psyneulink.globals.environment import _get_unique_id
+from psyneulink.globals.keywords import ALL, COMPONENT_INIT, CONROLLER_PHASE_SPEC, CONTROL, CONTROLLER, CYCLE, EXECUTING, FUNCTION, FUNCTIONS, INITIALIZE_CYCLE, INITIALIZING, INITIAL_VALUES, INTERNAL, LABELS, LEARNING, MATRIX, MONITOR_FOR_CONTROL, ORIGIN, PROJECTIONS, ROLES, SAMPLE, SINGLETON, SYSTEM, SYSTEM_INIT, TARGET, TERMINAL, VALUES, kwSeparator, kwSystemComponentCategory
 from psyneulink.globals.log import Log
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
 from psyneulink.globals.registry import register_category
+from psyneulink.globals.socket import ConnectionInfo
 from psyneulink.globals.utilities import AutoNumber, ContentAddressableList, append_type_to_name, convert_to_np_array, iscompatible
-from psyneulink.scheduling.scheduler import Scheduler, Condition, Always
+from psyneulink.scheduling.scheduler import Always, Condition, Scheduler
 
 __all__ = [
     'CONTROL_MECHANISM', 'CONTROL_PROJECTION_RECEIVERS', 'defaultInstanceCount', 'INPUT_ARRAY', 'kwSystemInputState',
@@ -857,6 +854,7 @@ class System(System_Base):
             processes = [processes]
         monitor_for_control = monitor_for_control or [MonitoredOutputStatesOption.PRIMARY_OUTPUT_STATES]
         self.control_signals_arg = control_signals or []
+        self.projections = set()
 
         # Assign args to params and functionParams dicts (kwConstants must == arg names)
         params = self._assign_args_to_param_dicts(processes=processes,
@@ -892,6 +890,7 @@ class System(System_Base):
                          context=context)
 
         self.context.initialization_status = ContextFlags.INITIALIZED
+        self.default_execution_id = _get_unique_id()
         self._execution_id = None
 
         # Assign controller
@@ -1122,6 +1121,8 @@ class System(System_Base):
                     self._all_mechs.append(sender_object_item.objective_mechanism)
 
             process._all_mechanisms = MechanismList(process, components_list=process._mechs)
+            for proj in process.projections:
+                proj._enable_for_compositions(self)
 
         # # Instantiate processList using process_tuples, and point self.processes to it
         # # Note: this also points self.params[PROCESSES] to self.processes
@@ -1598,9 +1599,11 @@ class System(System_Base):
 
                 # Add MappingProjection from stimulus_input_state to ORIGIN mechainsm's inputState
                 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
-                MappingProjection(sender=stimulus_input_state,
+                proj = MappingProjection(sender=stimulus_input_state,
                                   receiver=origin_mech.input_states[j],
                                   name=self.name+' Input Projection to '+origin_mech.name+' Input State '+str(j))
+                proj._enable_for_compositions(self)
+
 
     def _instantiate_learning_graph(self, context=None):
         """Build graph of LearningMechanism and LearningProjections
@@ -1722,7 +1725,8 @@ class System(System_Base):
                         # Move error_signal Projections from old obj_mech to new one (now sender_mech)
                         for error_signal_proj in obj_mech.output_states[OUTCOME].efferents:
                             # IMPLEMENTATION NOTE:  MOVE TO COMPOSITION WHEN THAT HAS BEEN IMPLEMENTED
-                            MappingProjection(sender=sender_mech, receiver=error_signal_proj.receiver)
+                            proj = MappingProjection(sender=sender_mech, receiver=error_signal_proj.receiver)
+                            proj._enable_for_compositions(self)
                             _assign_error_signal_projections(sample_mech, self, scope=process, objective_mech=obj_mech)
                             # sender_mech.output_states[OUTCOME].efferents.append(error_signal_proj)
 
@@ -1977,9 +1981,10 @@ class System(System_Base):
 
                 # Add MappingProjection from system_target_input_state to TARGET mechanism's target inputState
                 from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
-                MappingProjection(sender=system_target_input_state,
+                proj = MappingProjection(sender=system_target_input_state,
                                   receiver=target_mech_TARGET_input_state,
                                   name=self.name + ' Input Projection to ' + target_mech_TARGET_input_state.name)
+                proj._enable_for_compositions(self)
 
     def _assign_output_states(self):
         """Assign OutputStates for System (the values of which will comprise System.value)
@@ -2569,21 +2574,27 @@ class System(System_Base):
             self.context.execution_phase = ContextFlags.PROCESSING
             self.context.string = EXECUTING + " " + SYSTEM + " " + self.name
 
+        if execution_id is None:
+            execution_id = self.default_execution_id
         # Update execution_id for self and all mechanisms in graph (including learning) and controller
-        from psyneulink.globals.environment import _get_unique_id
-        self._execution_id = execution_id or _get_unique_id()
         # FIX: GO THROUGH LEARNING GRAPH HERE AND ASSIGN EXECUTION TOKENS FOR ALL MECHANISMS IN IT
         # self.learning_execution_list
         for mech in self.execution_graph:
-            mech._execution_id = self._execution_id
+            mech._execution_id = execution_id
+            mech._assign_context_values(execution_id, composition=self)
+
         for learning_mech in self.learning_execution_list:
-            learning_mech._execution_id = self._execution_id
+            learning_mech._execution_id = execution_id
+            learning_mech._assign_context_values(execution_id, composition=self)
+
         if self.controller is not None:
-            self.controller._execution_id = self._execution_id
+            self.controller._execution_id = execution_id
+            self.controller._assign_context_values(execution_id, composition=self)
             if self.enable_controller and self.controller.input_states:
                 for state in self.controller.input_states:
                     for projection in state.all_afferents:
-                        projection.sender.owner._execution_id = self._execution_id
+                        projection.sender.owner._execution_id = execution_id
+                        projection.sender.owner._assign_context_values(execution_id, composition=self)
 
         self._report_system_output = (self.prefs.reportOutputPref and
                                       self.context.execution_phase & (ContextFlags.PROCESSING | ContextFlags.LEARNING))
@@ -3269,6 +3280,9 @@ class System(System_Base):
 
     def _restore_state(self):
         pass
+
+    def _add_projection(self, projection):
+        self.projections.add(projection)
 
     @property
     def function(self):

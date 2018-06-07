@@ -2395,7 +2395,7 @@ class Mechanism_Base(Mechanism):
         for i in range(len(self.input_states)):
             state = self.input_states[i]
             state.update(execution_id=execution_id, params=runtime_params, context=context)
-        return np.array(self.input_values)
+        return np.array([state.parameters.value.get(execution_id) for state in self.input_states])
 
     def _update_parameter_states(self, execution_id=None, runtime_params=None, context=None):
 

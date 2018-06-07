@@ -16,8 +16,10 @@ class TestLCControlMechanism:
         # B.output_states[0].value *= 0.0  # Reset after init | Doesn't matter here b/c default var = zero, no intercept
 
         P = pnl.Process(pathway=[A, B])
+        S = pnl.System(processes=[P])
 
         LC = pnl.LCControlMechanism(
+            system=S,
             modulated_mechanisms=[A, B],
             base_level_gain=G,
             scaling_factor_gain=k,
@@ -29,8 +31,6 @@ class TestLCControlMechanism:
         )
         for output_state in LC.output_states:
             output_state.value *= starting_value_LC
-
-        S = pnl.System(processes=[P])
 
         gain_created_by_LC_output_state_1 = []
         gain_created_by_LC_output_state_2 = []

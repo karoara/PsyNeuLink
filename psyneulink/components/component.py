@@ -748,8 +748,7 @@ class Param(types.SimpleNamespace):
                 try:
                     return self.values[execution_id]
                 except KeyError:
-                    logger.info('Param \'{0}\' has no value for execution_id {1}'.format(self.name, execution_id))
-                    return None
+                    return self.default_value
 
     def set(self, value, execution_context=None, override=False):
         if not override and self.read_only:
@@ -1934,10 +1933,12 @@ class Component(object, metaclass=ComponentsMeta):
         # Validate variable if parameter_validation is set and the function was called with a variable
         # IMPLEMENTATION NOTE:  context is used here just for reporting;  it is not tested in any of the methods called
         if self.prefs.paramValidationPref and variable is not None:
-            if self.parameters.context.get(execution).string:
-                self.parameters.context.get(execution).string = self.parameters.context.get(execution).string + SEPARATOR_BAR + FUNCTION_CHECK_ARGS
-            else:
-                self.parameters.context.get(execution).string = FUNCTION_CHECK_ARGS
+            try:
+                self.parameters.context.get(execution_id).add_to_string(FUNCTION_CHECK_ARGS)
+            except AttributeError:
+                self.parameters.context.set(Context(owner=self), execution_context=execution_id)
+                self.parameters.context.get(execution_id).add_to_string(FUNCTION_CHECK_ARGS)
+
             variable = self._validate_variable(variable, context=context)
 
         # PARAMS ------------------------------------------------------------
@@ -2369,9 +2370,9 @@ class Component(object, metaclass=ComponentsMeta):
             self.paramInstanceDefaults = self.paramClassDefaults.copy()
 
     def _assign_context_values(self, execution_id, base_execution_id=None, **kwargs):
-        try:
-            context_param = self.parameters.context.get(execution_id)
-        except ComponentError:
+        context_param = self.parameters.context.get(execution_id)
+
+        if context_param is None:
             self.parameters.context._initialize_from_context(execution_id, base_execution_id)
             context_param = self.parameters.context.get(execution_id)
 

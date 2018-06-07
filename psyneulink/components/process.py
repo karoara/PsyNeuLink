@@ -442,6 +442,7 @@ Class Reference
 """
 
 import inspect
+import itertools
 import numbers
 import re
 import warnings
@@ -462,6 +463,7 @@ from psyneulink.components.states.modulatorysignals.learningsignal import Learni
 from psyneulink.components.states.parameterstate import ParameterState
 from psyneulink.components.states.state import _instantiate_state, _instantiate_state_list
 from psyneulink.globals.context import ContextFlags
+from psyneulink.globals.environment import _get_unique_id
 from psyneulink.globals.keywords import AUTO_ASSIGN_MATRIX, COMPONENT_INIT, ENABLED, EXECUTING, FUNCTION, FUNCTION_PARAMS, INITIALIZING, INITIAL_VALUES, INTERNAL, LEARNING, LEARNING_PROJECTION, MAPPING_PROJECTION, MATRIX, NAME, OBJECTIVE_MECHANISM, ORIGIN, PARAMETER_STATE, PATHWAY, PROCESS, PROCESS_INIT, SENDER, SINGLETON, TARGET, TERMINAL, kwProcessComponentCategory, kwReceiverArg, kwSeparator
 from psyneulink.globals.preferences.componentpreferenceset import is_pref_set
 from psyneulink.globals.preferences.preferenceset import PreferenceLevel
@@ -871,6 +873,9 @@ class Process(Process_Base):
         if default_variable is None and len(pathway) > 0:
             default_variable = pathway[0].instance_defaults.variable
 
+        self.projections = set()
+        self.default_execution_id = _get_unique_id()
+
         super(Process, self).__init__(default_variable=default_variable,
                                       size=size,
                                       param_defaults=params,
@@ -1231,11 +1236,13 @@ class Process(Process_Base):
                         else:
                             if not learning_projections:
                                 # Add learningProjection to Projection if it doesn't have one
-                                _add_projection_to(
+                                projs = _add_projection_to(
                                     preceding_item,
                                     preceding_item._parameter_states[MATRIX],
                                     projection_spec=self.learning
                                 )
+                                for proj in projs:
+                                    proj._enable_for_compositions(self)
                     continue
 
                 # Preceding item was a Mechanism, so check if a Projection needs to be instantiated between them
@@ -1249,6 +1256,8 @@ class Process(Process_Base):
                 projection_found = False
                 for projection in projection_list:
                     # Current mechanism DOES receive a Projection from the preceding item
+                    # DEPRECATED: this allows any projection existing between A->B to automatically be added
+                    # to this process
                     if preceding_item == projection.sender.owner:
                         projection_found = True
                         if self.learning:
@@ -1292,15 +1301,29 @@ class Process(Process_Base):
                                         for projection in matrix_param_state.mod_afferents
                                     )
                                 ):
-                                    _add_projection_to(
+                                    projs = _add_projection_to(
                                         projection,
                                         matrix_param_state,
                                         projection_spec=self.learning
                                     )
+                                    for p in projs:
+                                        p._enable_for_compositions(self)
 
                             if self.prefs.verbosePref:
                                 print("LearningProjection added to Projection from Mechanism {0} to Mechanism {1} "
                                       "in pathway of {2}".format(preceding_item.name, item.name, self.name))
+
+                        # remove this to enforce that projections need to be explicitly added to Compositions
+                        # left in for backwards compatibility
+                        # DEPRECATED
+                        projection._enable_for_compositions(self)
+                        # warnings.warn(
+                        #     'The ability for Process to associate with itself all projections between '
+                        #     'subsequent mechanisms implicitly is deprecated. In the future, you must '
+                        #     'explicitly state the projections you want included in any Composition.',
+                        #     FutureWarning
+                        # )
+
                         break
 
                 if not projection_found:
@@ -1352,6 +1375,10 @@ class Process(Process_Base):
                         params=projection_params,
                         name='{} from {} to {}'.format(MAPPING_PROJECTION, preceding_item.name, item.name)
                     )
+
+                    projection._enable_for_compositions(self)
+                    for mod_proj in itertools.chain.from_iterable([p.mod_afferents for p in projection.parameter_states]):
+                        mod_proj._enable_for_compositions(self)
 
                     if self.prefs.verbosePref:
                         print("MappingProjection added from Mechanism {0} to Mechanism {1}"
@@ -1543,7 +1570,8 @@ class Process(Process_Base):
                 #    with Projection as OBJECT item and original params as PARAMS item of the tuple
                 # IMPLEMENTATION NOTE:  params is currently ignored
                 pathway[i] = projection
-                receiver_mech.input_state.afferents_info[projection] = ConnectionInfo(compositions=self)
+
+                projection._enable_for_compositions(self)
 
         if learning_projection_specified:
             self.learning = LEARNING
@@ -1673,9 +1701,10 @@ class Process(Process_Base):
                                        "variable for corresponding inputState of {3}".
                                        format(i, process_input[i], self.name, mechanism.name))
                 # Create MappingProjection from Process input state to corresponding mechanism.input_state
-                MappingProjection(sender=self.process_input_states[i],
+                proj = MappingProjection(sender=self.process_input_states[i],
                                   receiver=mechanism.input_states[i],
                                   name=self.name+'_Input Projection')
+                proj._enable_for_compositions(self)
                 if self.prefs.verbosePref:
                     print("Assigned input value {0} ({1}) of {2} to corresponding inputState of {3}".
                           format(i, process_input[i], self.name, mechanism.name))
@@ -1694,9 +1723,10 @@ class Process(Process_Base):
                                            format(j, process_input[j], self.name,
                                                   mechanism.instance_defaults.variable[i], i, mechanism.name))
                     # Create MappingProjection from Process buffer_intput_state to corresponding mechanism.input_state
-                    MappingProjection(sender=self.process_input_states[j],
+                    proj = MappingProjection(sender=self.process_input_states[j],
                             receiver=mechanism.input_states[i],
                             name=self.name+'_Input Projection')
+                    proj._enable_for_compositions(self)
                     if self.prefs.verbosePref:
                         print("Assigned input value {0} ({1}) of {2} to inputState {3} of {4}".
                               format(j, process_input[j], self.name, i, mechanism.name))
@@ -2029,9 +2059,10 @@ class Process(Process_Base):
 
             # Add MappingProjection from target_input_state to ComparatorMechanism's TARGET InputState
             from psyneulink.components.projections.pathway.mappingprojection import MappingProjection
-            MappingProjection(sender=target_input_state,
+            proj = MappingProjection(sender=target_input_state,
                     receiver=target_mech_target,
                     name=self.name+'_Input Projection to '+target_mech_target.name)
+            proj._enable_for_compositions(self)
     # MODIFIED 8/14/17 END
 
 
@@ -2118,10 +2149,13 @@ class Process(Process_Base):
             self.context.execution_phase = ContextFlags.PROCESSING
             self.context.source = context
             self.context.string = EXECUTING + " " + PROCESS + " " + self.name
-        from psyneulink.globals.environment import _get_unique_id
-        self._execution_id = execution_id or _get_unique_id()
+
+        if execution_id is None:
+            execution_id = self.default_execution_id
+
         for mech in self.mechanisms:
-            mech._execution_id = self._execution_id
+            mech._execution_id = execution_id
+            mech._assign_context_values(execution_id, composition=self)
 
         # Report output if reporting preference is on and this is not an initialization run
         report_output = self.prefs.reportOutputPref and self.context.initialization_status == ContextFlags.INITIALIZED
@@ -2149,7 +2183,7 @@ class Process(Process_Base):
             # Execute Mechanism
             # Note:  DON'T include input arg, as that will be resolved by mechanism from its sender projections
             mechanism.context.execution_phase = ContextFlags.PROCESSING
-            mechanism.execute(context=context)
+            mechanism.execute(execution_id=execution_id, context=context)
             mechanism.context.execution_phase = ContextFlags.IDLE
 
             if report_output:
@@ -2475,6 +2509,9 @@ class Process(Process_Base):
             print("\t\t\t{0}".format(output_state.name))
 
         print ("\n---------------------------------------------------------")
+
+    def _add_projection(self, projection):
+        self.projections.add(projection)
 
     @property
     def function(self):
