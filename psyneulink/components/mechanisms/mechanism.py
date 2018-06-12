@@ -2163,6 +2163,11 @@ class Mechanism_Base(Mechanism):
         """
         self.ignore_execution_id = ignore_execution_id
         context = context or ContextFlags.COMMAND_LINE
+
+        # initialize context for this execution_id if not done already
+        if execution_id is not None:
+            self._assign_context_values(execution_id)
+
         if not self.context.source or context & ContextFlags.COMMAND_LINE:
             self.context.source = ContextFlags.COMMAND_LINE
         if self.context.initialization_status == ContextFlags.INITIALIZED:

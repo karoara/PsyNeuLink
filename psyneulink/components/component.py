@@ -2941,6 +2941,10 @@ class Component(object, metaclass=ComponentsMeta):
         raise ComponentError("{} class does not support initialize() method".format(self.__class__.__name__))
 
     def execute(self, variable=None, execution_id=None, runtime_params=None, context=None):
+        # initialize context for this execution_id if not done already
+        if execution_id is not None:
+            self._assign_context_values(execution_id)
+
         value = self._execute(variable=variable, execution_id=execution_id, runtime_params=runtime_params, context=context)
         self.parameters.value.set(value, execution_context=execution_id, override=True)
         return value
