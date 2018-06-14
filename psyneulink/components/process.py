@@ -1875,6 +1875,20 @@ class Process(Process_Base):
                                                                     object_item in self._learning_mechs):
                                     # learning_object_item = learning_mechanism
                                     self._learning_mechs.append(learning_mechanism)
+                        try:
+                            lc = param_projection._learning_components
+                            for proj in [
+                                param_projection,
+                                lc.error_projection,
+                                lc._activation_mech_input_projection,
+                                lc._activation_mech_output_projection,
+                            ]:
+                                proj._enable_for_compositions(self)
+
+                            for proj in lc.learning_mechanism.projections:
+                                proj._enable_for_compositions(self)
+                        except AttributeError:
+                            pass
 
             # Not all Projection subclasses instantiate ParameterStates
             except TypeError as e:
