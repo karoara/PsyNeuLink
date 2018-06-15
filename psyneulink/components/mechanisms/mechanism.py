@@ -2250,6 +2250,8 @@ class Mechanism_Base(Mechanism):
                 input = self.instance_defaults.variable
             variable = self._get_variable_from_input(input)
 
+        self.parameters.variable.set(variable, execution_context=execution_id)
+
         # UPDATE PARAMETER STATE(S)
         self._update_parameter_states(execution_id=execution_id, runtime_params=runtime_params, context=context)
 
