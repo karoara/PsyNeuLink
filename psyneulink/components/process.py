@@ -2169,7 +2169,7 @@ class Process(Process_Base):
             self._report_process_completion(separator=True)
 
         # FIX:  WHICH SHOULD THIS BE?
-        return self.output_state.value
+        return self.output_state.parameters.value.get(execution_id)
         # return self.output
 
     def _execute_learning(self, execution_id=None, target=None, context=None):

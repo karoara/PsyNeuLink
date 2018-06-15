@@ -159,9 +159,9 @@ class TestThreshold:
         S.run(inputs={D: 2.0},
               termination_processing={TimeScale.TRIAL: WhenFinished(D)})
         # decision variable's value should match threshold
-        assert D.value[0] == 10.0
+        assert D.parameters.value.get(S)[0] == 10.0
         # it should have taken 5 executions (and time_step_size = 1.0)
-        assert D.value[1] == 5.0
+        assert D.parameters.value.get(S)[1] == 5.0
 
 
     # def test_is_finished_stops_mechanism(self):

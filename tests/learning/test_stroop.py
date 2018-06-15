@@ -242,13 +242,13 @@ class TestStroop:
         print(CH_Weights._parameter_states["matrix"].value)
         print(CH_Weights.mod_matrix)
         expected_output = [
-            (colors.output_states[0].value, np.array([1., 1.])),
-            (words.output_states[0].value, np.array([-2., -2.])),
-            (hidden.output_states[0].value, np.array([0.13227553, 0.01990677])),
-            (response.output_states[0].value, np.array([0.51044657, 0.5483048])),
-            (objective_response.output_states[0].value, np.array([0.48955343, 0.4516952])),
-            (objective_response.output_states[MSE].value, np.array(0.22184555903789838)),
-            (objective_hidden.output_states[0].value, np.array([0., 0.])),
+            (colors.output_states[0].parameters.value.get(s), np.array([1., 1.])),
+            (words.output_states[0].parameters.value.get(s), np.array([-2., -2.])),
+            (hidden.output_states[0].parameters.value.get(s), np.array([0.13227553, 0.01990677])),
+            (response.output_states[0].parameters.value.get(s), np.array([0.51044657, 0.5483048])),
+            (objective_response.output_states[0].parameters.value.get(s), np.array([0.48955343, 0.4516952])),
+            (objective_response.output_states[MSE].parameters.value.get(s), np.array(0.22184555903789838)),
+            (objective_hidden.output_states[0].parameters.value.get(s), np.array([0., 0.])),
             (CH_Weights.mod_matrix, np.array([
                 [ 0.02512045, 1.02167245],
                 [ 2.02512045, 3.02167245],

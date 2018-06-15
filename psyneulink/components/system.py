@@ -2696,7 +2696,7 @@ class System(System_Base):
         if self._report_system_output:
             self._report_system_completion()
 
-        return self.terminal_mechanisms.outputStateValues
+        return self.terminal_mechanisms.get_output_state_values(execution_id)
 
     def _execute_processing(self, runtime_params, execution_id=None, context=None):
         # Execute each Mechanism in self.execution_list, in the order listed during its phase
